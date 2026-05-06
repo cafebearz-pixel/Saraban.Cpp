@@ -1,85 +1,232 @@
-const SHEET_NAME = "Saraban";
-const FOLDER_ID = "1_cL38QSfx58hkgnXKyfnFer3pADtNqD3"; // ID จากลิงก์ที่คุณส่งมา
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสารบัญทะเบียนหนังสือรับ | อบต.ชำผักแพว</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Sarabun', 'sans-serif'] },
+                    colors: { primary: '#0F172A', primaryLight: '#1E293B', accent: '#B45309', gold: '#D4AF37' }
+                }
+            }
+        }
+    </script>
 
-function doGet(e) {
-  const action = e.parameter.action;
-  if (action === "read") { return json(readData()); }
-  return json({ message: "Saraban API Ready" });
-}
+    <style>
+        body { background-color: #f8fafc; color: #0f172a; }
+        .glass-card { background: white; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 32px; }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); border-color: #cbd5e1; }
+        .progress-line { height: 4px; background: #f1f5f9; border-radius: 2px; position: relative; margin: 24px 0 32px; }
+        .progress-fill { position: absolute; height: 100%; background: #0f172a; border-radius: 2px; transition: width 0.6s ease; }
+        .p-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: white; border: 2px solid #e2e8f0; }
+        .p-dot.active { border-color: #0f172a; background: #0f172a; box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1); }
+        .p-label { position: absolute; top: 16px; transform: translateX(-50%); font-size: 9px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
+        .p-label.active { color: #0f172a; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
 
-function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  const action = body.action;
-  if (action === "create" || action === "update") { return json(saveData(body.data, action)); }
-  else if (action === "updateStatus") { updateStatus(body.id, body.status); return json({ success: true }); }
-  else if (action === "delete") { deleteData(body.id); return json({ success: true }); }
-  else if (action === "upload") { return json(uploadFile(body)); }
-}
+    <nav class="bg-primary text-white sticky top-0 z-50 h-16 border-b border-white/10 flex items-center">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 w-full flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-gold p-2 rounded-lg text-primary"><i class="fa-solid fa-file-signature"></i></div>
+                <span class="font-bold tracking-tight text-lg">Saraban CPP</span>
+            </div>
+            <div class="flex gap-2 items-center">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-4 py-1.5 rounded-lg bg-primaryLight text-xs font-bold">หน้าหลัก</button>
+                <button onclick="switchTab('completed')" id="tab-completed" class="px-4 py-1.5 rounded-lg hover:bg-primaryLight text-xs font-bold">งานเสร็จสิ้น</button>
+                <button id="authBtn" onclick="toggleAuth()" class="ml-2 bg-gold hover:bg-amber-600 text-primary px-4 py-1.5 rounded-lg font-bold text-xs transition">
+                    <span id="authLabel">GUEST</span>
+                </button>
+            </div>
+        </div>
+    </nav>
 
-function uploadFile(obj) {
-  try {
-    const folder = DriveApp.getFolderById(FOLDER_ID);
-    const blob = Utilities.newBlob(Utilities.base64Decode(obj.base64), obj.type, obj.name);
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    return { success: true, url: file.getUrl(), fileId: file.getId() };
-  } catch (e) {
-    return { success: false, error: e.toString() };
-  }
-}
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-10 w-full">
+        
+        <div id="stats-area" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10"></div>
 
-function getSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) { 
-    sh = ss.insertSheet(SHEET_NAME); 
-    sh.appendRow(["id", "receiveNo", "bookDate", "receivedDate", "fromOrg", "subject", "owner", "ownerReceivedDate", "status", "fileUrl"]); 
-  }
-  return sh;
-}
+        <div id="view-dashboard" class="block space-y-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-black text-gray-900">ทะเบียนหนังสือรับ</h2>
+                <div class="flex gap-2">
+                    <button onclick="switchTab('search')" class="p-3 bg-white border rounded-xl shadow-sm"><i class="fa-solid fa-search"></i></button>
+                    <button id="addDocBtn" onclick="openModal()" class="hidden bg-primary text-white px-6 py-3 rounded-xl font-bold shadow-xl flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> ลงรับหนังสือ
+                    </button>
+                </div>
+            </div>
+            <div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
 
-function readData() {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  if (values.length <= 1) return [];
-  const headers = values[0];
-  return values.slice(1).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
-  }).reverse();
-}
+        <div id="view-completed" class="hidden"><div id="completed-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
 
-function saveData(data, action) {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  const rowData = [data.id, data.receiveNo, data.bookDate, data.receivedDate, data.fromOrg, data.subject, data.owner, data.ownerReceivedDate, data.status, data.fileUrl || ""];
-  if (action === "create") { sh.appendRow(rowData); } 
-  else {
-    for (let i = 1; i < values.length; i++) {
-      if (String(values[i][0]) === String(data.id)) {
-        sh.getRange(i + 1, 1, 1, rowData.length).setValues([rowData]);
-        break;
-      }
-    }
-  }
-  return { success: true };
-}
+        <div id="view-search" class="hidden">
+            <input type="text" id="searchInput" onkeyup="searchDocs()" placeholder="ค้นหาชื่อเรื่องหรือเลขรับ..." class="w-full p-4 rounded-2xl border mb-10 outline-none shadow-sm">
+            <div id="search-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
+    </main>
 
-function updateStatus(id, status) {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  for (let i = 1; i < values.length; i++) {
-    if (String(values[i][0]) === String(id)) { sh.getRange(i + 1, 9).setValue(status); break; }
-  }
-}
+    <!-- Form Modal -->
+    <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+            <h3 class="text-xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">บันทึกหนังสือรับ</h3>
+            <form id="docForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <input type="hidden" id="docId"><input type="hidden" id="f_fileUrl">
+                <div class="space-y-1"><label class="text-[10px] font-black text-gray-400">เลขรับหนังสือ</label><input type="text" id="f_receiveNo" class="w-full bg-gray-50 border rounded-xl p-3 outline-none"></div>
+                <div class="space-y-1"><label class="text-[10px] font-black text-gray-400">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border rounded-xl p-3 outline-none md:col-span-2"></div>
+                <div class="space-y-1"><label class="text-[10px] font-black text-gray-400">ส่งจากหน่วยงาน</label><input type="text" id="f_fromOrg" class="w-full bg-gray-50 border rounded-xl p-3 outline-none"></div>
+                <div class="space-y-1"><label class="text-[10px] font-black text-gray-400">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border rounded-xl p-3 outline-none"></div>
+                <div class="space-y-1"><label class="text-[10px] font-black text-gray-400">ผู้รับผิดชอบ</label><select id="f_owner" class="w-full bg-gray-50 border rounded-xl p-3 outline-none"><option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option></select></div>
+                <div class="space-y-1"><label class="text-[10px] font-black text-gray-400">อัปโหลด PDF</label><input type="file" id="fileInput" accept="application/pdf" class="text-xs mt-1"></div>
+                <div class="md:col-span-2 flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal()" class="px-6 py-2 text-gray-400 font-bold">ยกเลิก</button>
+                    <button type="button" id="btnSave" onclick="saveDoc()" class="px-10 py-3 bg-primary text-white font-bold rounded-2xl">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-function deleteData(id) {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  for (let i = values.length - 1; i >= 1; i--) {
-    if (String(values[i][0]) === String(id)) { sh.deleteRow(i + 1); break; }
-  }
-}
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-md flex items-center justify-center z-50">
+        <div class="bg-white rounded-[40px] p-10 max-w-sm w-full mx-4 text-center">
+            <h3 class="text-2xl font-black mb-8 text-primary uppercase tracking-widest">Admin Access</h3>
+            <input type="password" id="passwordInput" placeholder="รหัสผ่าน" class="w-full bg-gray-100 rounded-2xl p-4 text-center text-3xl outline-none mb-6">
+            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-xl">ยืนยัน</button>
+        </div>
+    </div>
 
-function json(data) { return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON); }
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzbp68pMAVTctC05s_alIhRIscXNms9w-D7K5VwzAIp-_JmLKZ24PCADTRn7AmNw7T6/exec";
+        let isAdmin = false, documents = [];
+
+        document.addEventListener('DOMContentLoaded', fetchData);
+
+        async function fetchData() {
+            try { const res = await fetch(API_URL + "?action=read"); documents = await res.json() || []; renderAll(); } catch (e) {}
+        }
+
+        function toggleAuth() { if(isAdmin) { isAdmin = false; updateAuthUI(); } else document.getElementById('loginModal').classList.remove('hidden'); }
+        function attemptLogin() { if(document.getElementById('passwordInput').value === 'cp123'){ isAdmin=true; document.getElementById('loginModal').classList.add('hidden'); updateAuthUI(); document.getElementById('passwordInput').value=''; } else alert('รหัสผิด'); }
+        function updateAuthUI() { document.getElementById('authLabel').innerText = isAdmin ? 'ADMIN' : 'GUEST'; document.getElementById('addDocBtn').classList.toggle('hidden', !isAdmin); renderAll(); }
+        function switchTab(t) { ['dashboard', 'completed', 'search'].forEach(v => { document.getElementById(`view-${v}`).classList.toggle('hidden', v!==t); }); renderAll(); }
+
+        function openModal(id = null) {
+            document.getElementById('docModal').classList.remove('hidden');
+            document.getElementById('docForm').reset();
+            document.getElementById('docId').value = id ? id : '';
+            if(id) {
+                const d = documents.find(x => x.id === id);
+                document.getElementById('f_receiveNo').value = d.receiveNo;
+                document.getElementById('f_subject').value = d.subject;
+            }
+        }
+        function closeModal() { document.getElementById('docModal').classList.add('hidden'); }
+
+        async function saveDoc() {
+            const btn = document.getElementById('btnSave');
+            const fileInput = document.getElementById('fileInput');
+            btn.disabled = true; btn.innerText = "กำลังประมวลผล...";
+            
+            let fileUrl = document.getElementById('f_fileUrl').value;
+
+            if(fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = async function() {
+                    const base64 = reader.result.split(',')[1];
+                    await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'upload', base64: base64, type: file.type, name: file.name }) });
+                    setTimeout(() => executeSave(fileUrl), 2000);
+                };
+            } else executeSave(fileUrl);
+        }
+
+        async function executeSave(fUrl) {
+            const id = document.getElementById('docId').value || 'ID-' + Date.now();
+            const doc = {
+                id: id,
+                receiveNo: document.getElementById('f_receiveNo').value,
+                bookDate: document.getElementById('f_bookDate').value,
+                receivedDate: document.getElementById('f_receivedDate').value,
+                fromOrg: document.getElementById('f_fromOrg').value,
+                subject: document.getElementById('f_subject').value,
+                owner: document.getElementById('f_owner').value,
+                status: document.getElementById('docId').value ? documents.find(x=>x.id===id).status : "ลงรับแล้ว",
+                fileUrl: fUrl
+            };
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: document.getElementById('docId').value?'update':'create', data: doc }) });
+            fetchData(); closeModal(); btnSave.disabled=false; btnSave.innerText="บันทึกข้อมูล";
+        }
+
+        async function updateStatus(id, s) {
+            documents.find(x=>x.id===id).status = s; renderAll();
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'updateStatus', id: id, status: s }) });
+            fetchData();
+        }
+
+        async function deleteDoc(id) {
+            if(!confirm('ลบรายการนี้?')) return;
+            documents = documents.filter(x=>x.id!==id); renderAll();
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) });
+        }
+
+        function renderAll() {
+            renderStats();
+            renderCards(documents, 'dashboard-cards');
+            renderCards(documents.filter(x=>x.status==="เสร็จสิ้น"), 'completed-cards');
+        }
+
+        function renderStats() {
+            const area = document.getElementById('stats-area');
+            area.innerHTML = `
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100"><p class="text-[9px] font-black text-gray-400 uppercase">ลงรับแล้ว</p><h3 class="text-2xl font-black text-primary">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100"><p class="text-[9px] font-black text-gray-400 uppercase">กำลังเสนอ</p><h3 class="text-2xl font-black text-amber-600">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
+                <div class="bg-primary p-6 rounded-3xl shadow-lg"><p class="text-[9px] font-black text-gray-300 uppercase">เสร็จสิ้น</p><h3 class="text-2xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100"><p class="text-[9px] font-black text-gray-400 uppercase">รวมทั้งหมด</p><h3 class="text-2xl font-black text-primary">${documents.length}</h3></div>
+            `;
+        }
+
+        function searchDocs() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = documents.filter(x => x.subject.toLowerCase().includes(q) || x.receiveNo.toLowerCase().includes(q));
+            renderCards(filtered, 'search-cards');
+        }
+
+        function renderCards(list, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const statusFlow = ["ลงรับแล้ว", "กำลังเสนอ", "เสร็จสิ้น"];
+
+            list.forEach(d => {
+                const currentStep = statusFlow.indexOf(d.status);
+                const progressWidth = (currentStep / 2) * 100 + '%';
+
+                container.innerHTML += `
+                <div class="glass-card p-8 flex flex-col h-full relative">
+                    ${isAdmin ? `<div class="absolute top-6 right-6 flex gap-3 text-gray-300"><button onclick="openModal('${d.id}')"><i class="fa-solid fa-pen"></i></button><button onclick="deleteDoc('${d.id}')"><i class="fa-solid fa-trash"></i></button></div>`:''}
+                    <div class="mb-6"><span class="text-[9px] font-black bg-gray-100 px-2 py-1 rounded">REF: ${d.receiveNo || '-'}</span><h4 class="text-lg font-bold text-gray-900 mt-2">${d.subject}</h4></div>
+                    <div class="space-y-2 text-xs text-gray-500 mb-8 flex-grow">
+                        <p><i class="fa-solid fa-building w-5"></i> <b>ต้นทาง:</b> ${d.fromOrg || '-'}</p>
+                        <p><i class="fa-solid fa-calendar w-5"></i> <b>วันที่:</b> ${d.receivedDate || '-'}</p>
+                        <p><i class="fa-solid fa-user w-5"></i> <b>ผู้รับ:</b> ${d.owner || '-'}</p>
+                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="block w-full bg-blue-50 text-blue-600 py-3 rounded-xl text-center font-bold mt-4 shadow-sm"><i class="fa-solid fa-file-pdf"></i> เปิดดู PDF</a>`:''}
+                    </div>
+                    <div class="progress-line">
+                        <div class="progress-fill" style="width: ${progressWidth}"></div>
+                        ${statusFlow.map((s, i) => `<div class="p-dot ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%"></div><div class="p-label ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%">${s}</div>`).join('')}
+                    </div>
+                    ${isAdmin ? `<div class="flex justify-between mt-4"><button onclick="updateStatus('${d.id}', '${statusFlow[currentStep-1]}')" class="text-[10px] font-bold text-gray-400 ${currentStep===0?'invisible':''}">ย้อนกลับ</button><button onclick="updateStatus('${d.id}', '${statusFlow[currentStep+1]}')" class="bg-primary text-white px-5 py-2 rounded-xl text-[10px] font-bold ${currentStep===2?'hidden':''}">ถัดไป</button></div>`:''}
+                </div>`;
+            });
+        }
+    </script>
+</body>
+</html>
