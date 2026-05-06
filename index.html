@@ -24,7 +24,6 @@
         .step-item.active .step-dot { background: #0F172A; border-color: #0F172A; }
         .step-label { font-size: 10px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
         .step-item.active .step-label { color: #0F172A; }
-        /* Calendar Styles */
         .cal-day { min-height: 100px; border: 1px solid #f1f5f9; transition: 0.2s; cursor: pointer; }
         .cal-day:hover { background: #f8fafc; }
         .cal-today { background: #eff6ff; border: 2px solid #3b82f6; }
@@ -33,6 +32,7 @@
 </head>
 <body class="antialiased">
 
+    <!-- Nav -->
     <nav class="bg-primary text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
         <div class="flex items-center gap-3">
             <div class="bg-gold p-2 rounded-xl text-primary shadow-lg"><i class="fa-solid fa-file-invoice"></i></div>
@@ -46,19 +46,28 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
         <div id="stats-area" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"></div>
 
+        <!-- Tab Bar -->
         <div class="flex flex-wrap gap-3 mb-4 bg-white/40 backdrop-blur p-2.5 rounded-[24px] border border-white shadow-sm">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="btn-tab bg-primary text-white flex-1 transition shadow-lg font-bold">หน้าแรก</button>
-            <button onclick="switchTab('by-owner')" id="tab-by-owner" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">สถิติแยกกองงาน</button>
-            <button onclick="switchTab('calendar')" id="tab-calendar" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">ปฏิทินงานรับ</button>
+            <button onclick="switchTab('by-owner')" id="tab-by-owner" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">แยกแต่ละกอง</button>
+            <button onclick="switchTab('calendar')" id="tab-calendar" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">ปฏิทิน</button>
             <button id="addDocBtn" onclick="openModal()" class="hidden bg-gold text-primary btn-tab shadow-lg transition font-black ml-auto"><i class="fa-solid fa-plus-circle mr-2"></i>ลงรับหนังสือใหม่</button>
         </div>
 
+        <!-- 🟢 ช่องค้นหา (Search Bar) -->
+        <div class="mb-8 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" id="searchInput" onkeyup="handleSearch()" placeholder="ค้นหาเลขรับที่, เลขหนังสือ, ชื่อเรื่อง, หน่วยงาน..." class="w-full bg-white p-5 pl-14 rounded-2xl border border-gray-100 shadow-sm outline-none focus:ring-2 focus:ring-primary focus:border-primary font-bold text-gray-700 transition">
+        </div>
+
+        <!-- Dashboard View -->
         <div id="view-dashboard" class="block"><div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
         
+        <!-- By Owner View -->
         <div id="view-by-owner" class="hidden">
             <div class="bg-white p-8 rounded-[35px] shadow-sm mb-8 border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="font-black text-primary uppercase text-sm">เลือกกองงานที่ต้องการตรวจสอบ</div>
-                <select id="ownerFilter" onchange="renderByOwner()" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none font-bold w-full md:w-80">
+                <select id="ownerFilter" onchange="renderAll()" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none font-bold w-full md:w-80">
                     <option value="">-- เลือกกองงาน --</option>
                     <option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                 </select>
@@ -66,6 +75,7 @@
             <div id="owner-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
 
+        <!-- Calendar View -->
         <div id="view-calendar" class="hidden">
             <div class="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100">
                 <div class="flex justify-between items-center mb-8">
@@ -83,6 +93,7 @@
         </div>
     </main>
 
+    <!-- Modal List Docs in Day -->
     <div id="dayModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
         <div class="bg-white rounded-[40px] p-8 w-full max-w-2xl overflow-y-auto max-h-[80vh]">
             <div class="flex justify-between items-center mb-6">
@@ -93,6 +104,22 @@
         </div>
     </div>
 
+    <!-- 🟢 Modal ลงชื่อรับหนังสือ -->
+    <div id="signModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+        <div class="bg-white rounded-[30px] p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"><i class="fa-solid fa-file-signature"></i></div>
+            <h3 class="text-xl font-black text-primary mb-2 uppercase">ลงชื่อผู้รับหนังสือ</h3>
+            <p class="text-xs text-gray-400 font-bold mb-6">กรุณาระบุชื่อผู้มารับหนังสือเพื่อเป็นหลักฐาน</p>
+            <input type="text" id="signerName" placeholder="พิมพ์ชื่อ-นามสกุล..." class="w-full bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 mb-6 font-bold text-center outline-none focus:border-blue-500 transition">
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeSignModal()" class="px-6 py-3 bg-gray-100 rounded-xl font-bold text-gray-500 hover:bg-gray-200 transition">ยกเลิก</button>
+                <button onclick="submitSignature()" class="px-6 py-3 bg-blue-600 rounded-xl font-bold text-white hover:bg-blue-700 transition shadow-lg">ยืนยันการรับ</button>
+            </div>
+            <input type="hidden" id="signDocId">
+        </div>
+    </div>
+
+    <!-- Modal Form (ลงข้อมูล) -->
     <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[40px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">ลงข้อมูลหนังสือรับ</h3>
@@ -118,6 +145,7 @@
         </div>
     </div>
 
+    <!-- Login Modal -->
     <div id="loginModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-6 uppercase">Admin Login</h3>
@@ -131,6 +159,7 @@
         let isAdmin = false, documents = [];
         let currentCalMonth = new Date().getMonth();
         let currentCalYear = new Date().getFullYear();
+        let searchQuery = ""; // 🟢 ตัวแปรเก็บคำค้นหา
 
         function formatDateForInput(dateStr) {
             if (!dateStr) return '';
@@ -152,11 +181,11 @@
                 const res = await fetch(API_URL + "?action=read");
                 const data = await res.json();
                 if(data) { 
-                    // 🟢 ปรับการจัดเรียงตามเลขรับที่ (receiveNo2) จากมากไปน้อย
+                    // 🟢 เรียงลำดับตามเลขรับที่ จากน้อยไปมาก
                     documents = data.sort((a, b) => {
                         const noA = parseInt(a.receiveNo2) || 0;
                         const noB = parseInt(b.receiveNo2) || 0;
-                        return noB - noA;
+                        return noA - noB; 
                     });
                     renderAll(); 
                 }
@@ -180,7 +209,11 @@
                 const btn = document.getElementById(`tab-${v}`);
                 if(btn) { btn.classList.toggle('bg-primary', v===t); btn.classList.toggle('text-white', v===t); btn.classList.toggle('bg-white', v!==t); btn.classList.toggle('text-gray-400', v!==t); }
             });
-            if(t === 'calendar') renderCalendar();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            renderAll();
         }
 
         function openModal(id = null) {
@@ -228,10 +261,27 @@
             fetchData();
         }
 
-        async function confirmReceipt(id) {
+        // 🟢 ระบบเปิด Modal พิมพ์ชื่อยืนยันรับหนังสือ
+        function confirmReceipt(id) {
+            document.getElementById('signDocId').value = id;
+            document.getElementById('signerName').value = '';
+            document.getElementById('signModal').classList.remove('hidden');
+        }
+        function closeSignModal() {
+            document.getElementById('signModal').classList.add('hidden');
+        }
+
+        // 🟢 ส่งข้อมูลยืนยันรับเข้าชีทพร้อมชื่อผู้รับ
+        async function submitSignature() {
+            const id = document.getElementById('signDocId').value;
+            const name = document.getElementById('signerName').value.trim();
+            if(!name) { alert('กรุณาพิมพ์ชื่อผู้รับหนังสือเพื่อเป็นหลักฐาน'); return; }
+            
             const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-            if(!confirm('ยืนยันว่ากองได้รับหนังสือแล้ว ณ วันที่ ' + today + '?')) return;
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'updateStatus', id: id, status: 'กำลังเสนอ', ownerReceivedDate: today }) });
+            const signatureText = `${today} (ผู้รับ: ${name})`; // บันทึกเป็นวันที่ + ชื่อ
+            
+            closeSignModal();
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'updateStatus', id: id, status: 'กำลังเสนอ', ownerReceivedDate: signatureText }) });
             fetchData();
         }
 
@@ -243,26 +293,34 @@
         }
 
         function renderAll() {
-            renderStats();
-            renderCards(documents, 'dashboard-cards');
-            renderByOwner();
-            renderCalendar();
+            // 🟢 ระบบกรองข้อมูลจากช่องค้นหา
+            const filteredDocs = documents.filter(d => {
+                if(!searchQuery) return true;
+                const text = `${d.receiveNo2} ${d.receiveNo} ${d.subject} ${d.fromOrg} ${d.owner}`.toLowerCase();
+                return text.includes(searchQuery);
+            });
+
+            renderStats(filteredDocs);
+            renderCards(filteredDocs, 'dashboard-cards');
+            
+            const owner = document.getElementById('ownerFilter').value;
+            if(!owner) { 
+                document.getElementById('owner-cards').innerHTML = ''; 
+            } else {
+                renderCards(filteredDocs.filter(x => x.owner === owner), 'owner-cards');
+            }
+            
+            renderCalendar(filteredDocs);
         }
 
-        function renderStats() {
+        function renderStats(list) {
             const area = document.getElementById('stats-area');
             area.innerHTML = `
-                <div class="glass-card p-6 border-l-4 border-primary"><p class="text-[10px] font-black text-gray-400 uppercase">ทั้งหมด</p><h3 class="text-3xl font-black text-primary">${documents.length}</h3></div>
-                <div class="glass-card p-6 border-l-4 border-amber-500"><p class="text-[10px] font-black text-gray-400 uppercase">ลงรับแล้ว</p><h3 class="text-3xl font-black text-amber-500">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
-                <div class="glass-card p-6 border-l-4 border-indigo-500"><p class="text-[10px] font-black text-gray-400 uppercase">กำลังเสนอ</p><h3 class="text-3xl font-black text-indigo-500">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
-                <div class="bg-primary p-6 rounded-[28px] shadow-2xl text-white"><p class="text-[10px] font-black text-blue-200 uppercase">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-primary"><p class="text-[10px] font-black text-gray-400 uppercase">พบหนังสือ</p><h3 class="text-3xl font-black text-primary">${list.length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-amber-500"><p class="text-[10px] font-black text-gray-400 uppercase">ลงรับแล้ว</p><h3 class="text-3xl font-black text-amber-500">${list.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-indigo-500"><p class="text-[10px] font-black text-gray-400 uppercase">กำลังเสนอ</p><h3 class="text-3xl font-black text-indigo-500">${list.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
+                <div class="bg-primary p-6 rounded-[28px] shadow-2xl text-white"><p class="text-[10px] font-black text-blue-200 uppercase">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${list.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
             `;
-        }
-
-        function renderByOwner() {
-            const owner = document.getElementById('ownerFilter').value;
-            if(!owner) { document.getElementById('owner-cards').innerHTML = ''; return; }
-            renderCards(documents.filter(x => x.owner === owner), 'owner-cards');
         }
 
         function renderCards(list, containerId) {
@@ -317,8 +375,8 @@
             });
         }
 
-        // 🟢 ระบบปฏิทิน
-        function renderCalendar() {
+        // 🟢 ระบบปฏิทิน (รองรับการกรองข้อมูล)
+        function renderCalendar(list) {
             const grid = document.getElementById('calendar-grid');
             const monthDisp = document.getElementById('monthDisplay');
             grid.innerHTML = '';
@@ -329,15 +387,14 @@
             
             monthDisp.innerText = new Date(currentCalYear, currentCalMonth).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 
-            // วันว่างช่วงต้นเดือน
             for (let i = 0; i < firstDay; i++) {
                 grid.innerHTML += `<div class="cal-day bg-gray-50/50"></div>`;
             }
 
-            // วันที่จริง
             for (let day = 1; day <= lastDate; day++) {
                 const dateKey = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const docsInDay = documents.filter(d => d.receivedDate && d.receivedDate.startsWith(dateKey));
+                // ใช้ข้อมูลจากที่ถูก Search แล้ว
+                const docsInDay = list.filter(d => d.receivedDate && d.receivedDate.startsWith(dateKey));
                 const isToday = today.getDate() === day && today.getMonth() === currentCalMonth && today.getFullYear() === currentCalYear;
 
                 grid.innerHTML += `
@@ -356,21 +413,28 @@
             currentCalMonth += step;
             if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
             if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
-            renderCalendar();
+            renderAll();
         }
 
+        // 🟢 โชว์รายละเอียดของวันที่ถูกคลิกในปฏิทิน
         function showDayDetails(dateKey, dayNum) {
-            const docs = documents.filter(d => d.receivedDate && d.receivedDate.startsWith(dateKey));
+            // ดึงข้อมูลที่ Search แล้ว
+            const filteredDocs = documents.filter(d => {
+                if(!searchQuery) return true;
+                return `${d.receiveNo2} ${d.receiveNo} ${d.subject} ${d.fromOrg} ${d.owner}`.toLowerCase().includes(searchQuery);
+            });
+            const docs = filteredDocs.filter(d => d.receivedDate && d.receivedDate.startsWith(dateKey));
+            
             if(docs.length === 0) return;
 
             const modal = document.getElementById('dayModal');
             const list = document.getElementById('dayDocList');
-            document.getElementById('dayModalTitle').innerText = `รายการวันที่ ${dayNum} ${new Date(currentCalYear, currentCalMonth).toLocaleDateString('th-TH', { month: 'long' })}`;
+            document.getElementById('dayModalTitle').innerText = `วันที่ ${dayNum} ${new Date(currentCalYear, currentCalMonth).toLocaleDateString('th-TH', { month: 'long' })}`;
             
             list.innerHTML = docs.map(d => `
                 <div class="p-4 bg-gray-50 rounded-2xl border-l-4 border-gold shadow-sm">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="text-[10px] font-black text-primary bg-white px-2 py-1 rounded shadow-sm">เลขรับ: ${d.receiveNo2}</span>
+                        <span class="text-[10px] font-black text-primary bg-white px-2 py-1 rounded shadow-sm">เลขรับที่: ${d.receiveNo2 || '-'}</span>
                         <span class="text-[10px] font-bold text-gray-400 italic">${d.owner || 'ไม่ระบุหน่วยงาน'}</span>
                     </div>
                     <p class="text-sm font-bold text-gray-800">${d.subject}</p>
