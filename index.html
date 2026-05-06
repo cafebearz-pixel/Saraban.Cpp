@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SARABAN CPP | อบต.ชำผักแพว</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 🟢 เปลี่ยนฟอนต์กลับเป็น Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Sarabun', 'sans-serif'] }, colors: { primary: '#0F172A', gold: '#D4AF37' } } } }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Prompt', 'sans-serif'] }, colors: { primary: '#0F172A', gold: '#D4AF37' } } } }
     </script>
     <style>
-        body { background: #f1f5f9; font-family: 'Sarabun', sans-serif; }
+        body { background: #f1f5f9; font-family: 'Prompt', sans-serif; }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 28px; transition: 0.3s; position: relative; }
         .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
         .btn-tab { padding: 14px 28px; border-radius: 16px; font-weight: 700; font-size: 15px; transition: 0.2s; }
@@ -61,6 +62,7 @@
         </div>
     </main>
 
+    <!-- Modal Form -->
     <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[40px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">ลงข้อมูลหนังสือรับ</h3>
@@ -86,6 +88,7 @@
         </div>
     </div>
 
+    <!-- Login -->
     <div id="loginModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-6 uppercase">Admin Login</h3>
@@ -237,24 +240,28 @@
                     <div class="mb-6">
                         <span class="text-[10px] font-black px-3 py-1.5 rounded-lg ${d.status==='เสร็จสิ้น'?'bg-green-100 text-green-600':'bg-amber-100 text-amber-600'}">${d.status}</span>
                         <div class="mt-5 space-y-1">
-                             <p class="text-[12px] text-primary font-black uppercase">เลขรับที่ : <span class="bg-blue-100 px-2 py-0.5 rounded text-blue-700">${d.receiveNo2 || '-'}</span></p>
-                             <p class="text-[11px] text-gray-400 font-bold uppercase">เลขรับหนังสือ : <span class="text-gray-700">${d.receiveNo || '-'}</span></p>
+                             <!-- 🟢 แสดงเลขรับที่ -->
+                             <p class="text-[13px] text-primary font-black uppercase">เลขรับที่ : <span class="bg-blue-100 px-2 py-0.5 rounded text-blue-700 font-black">${d.receiveNo2 || '-'}</span></p>
+                             <p class="text-[12px] text-gray-400 font-bold uppercase">เลขรับหนังสือ : <span class="text-gray-700 font-bold">${d.receiveNo || '-'}</span></p>
                         </div>
                         <h4 class="text-xl font-bold text-gray-800 leading-snug line-clamp-3 bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50 mt-4">${d.subject}</h4>
                     </div>
-                    <div class="space-y-3 text-[13px] text-gray-600 mb-6 flex-grow border-t pt-5">
-                        <div class="grid grid-cols-2 gap-2 text-[12px]">
-                            <div><p class="text-gray-400 font-bold uppercase text-[9px]">วันที่ออกหนังสือ</p><p class="font-bold text-gray-800"><i class="fa-regular fa-calendar-check mr-1 text-gold"></i>${formatThaiDate(d.bookDate)}</p></div>
-                            <div><p class="text-gray-400 font-bold uppercase text-[9px]">วันที่ลงรับ</p><p class="font-bold text-gray-800"><i class="fa-solid fa-calendar-day mr-1 text-blue-400"></i>${formatThaiDate(d.receivedDate)}</p></div>
+                    <!-- 🟢 ปรับขนาดตัวอักษรในส่วนข้อมูลรายละเอียดให้ใหญ่ขึ้น -->
+                    <div class="space-y-4 text-[14px] text-gray-600 mb-6 flex-grow border-t pt-5">
+                        <div class="grid grid-cols-2 gap-4 text-[13px]">
+                            <div><p class="text-gray-400 font-black uppercase text-[10px]">วันที่ออกหนังสือ</p><p class="font-bold text-gray-800 text-[14px]"><i class="fa-regular fa-calendar-check mr-1 text-gold"></i>${formatThaiDate(d.bookDate)}</p></div>
+                            <div><p class="text-gray-400 font-black uppercase text-[10px]">วันที่ลงรับ</p><p class="font-bold text-gray-800 text-[14px]"><i class="fa-solid fa-calendar-day mr-1 text-blue-400"></i>${formatThaiDate(d.receivedDate)}</p></div>
                         </div>
-                        <p class="pt-2 border-t border-dashed">ส่งมาจาก: <span class="font-bold text-gray-900">${d.fromOrg || '-'}</span></p>
-                        <p>ผู้รับผิดชอบ: <span class="font-bold text-primary">${d.owner || 'รอระบุ'}</span></p>
-                        <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
-                            <p class="text-[10px] font-bold text-blue-400 uppercase">กองรับหนังสือเมื่อ</p>
-                            <p class="font-bold text-blue-700">${d.ownerReceivedDate || 'ยังไม่ได้รับการยืนยัน'}</p>
+                        <div class="pt-3 border-t border-dashed space-y-2">
+                             <p class="text-[14px]">ส่งมาจาก: <span class="font-black text-gray-900">${d.fromOrg || '-'}</span></p>
+                             <p class="text-[14px]">ผู้รับผิดชอบ: <span class="font-black text-primary">${d.owner || 'รอระบุ'}</span></p>
                         </div>
-                        ${!d.ownerReceivedDate ? `<button onclick="confirmReceipt('${d.id}')" class="w-full bg-white text-blue-600 py-3 rounded-xl font-bold text-xs mt-2 border-2 border-blue-100 hover:bg-blue-600 hover:text-white transition shadow-sm">ยืนยันได้รับหนังสือแล้ว</button>` : ''}
-                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-primary text-white py-4 rounded-2xl font-black text-xs shadow-xl hover:bg-black transition mt-4"><i class="fa-solid fa-file-pdf text-lg text-gold"></i> เปิดดูเอกสารฉบับเต็ม</a>`:''}
+                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
+                            <p class="text-[11px] font-black text-blue-400 uppercase">กองรับหนังสือเมื่อ</p>
+                            <p class="font-black text-blue-700 text-[15px]">${d.ownerReceivedDate || 'ยังไม่ได้รับการยืนยัน'}</p>
+                        </div>
+                        ${!d.ownerReceivedDate ? `<button onclick="confirmReceipt('${d.id}')" class="w-full bg-white text-blue-600 py-3.5 rounded-xl font-black text-sm mt-2 border-2 border-blue-100 hover:bg-blue-600 hover:text-white transition shadow-sm">ยืนยันได้รับหนังสือแล้ว</button>` : ''}
+                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-primary text-white py-4 rounded-2xl font-black text-sm shadow-xl hover:bg-black transition mt-4"><i class="fa-solid fa-file-pdf text-lg text-gold"></i> เปิดดูเอกสารฉบับเต็ม</a>`:''}
                     </div>
                     <div class="progress-wrapper">
                         <div class="progress-line-bg"><div class="progress-line-fill" style="width: ${progressWidth}"></div></div>
@@ -264,8 +271,8 @@
                     </div>
                     ${isAdmin ? `
                     <div class="flex justify-between items-center mt-6 pt-5 border-t border-gray-50">
-                        <button onclick="updateStatus('${d.id}', '${statusFlow[step-1]}')" class="text-[11px] font-black text-gray-400 hover:text-primary ${step===0?'invisible':''}">ย้อนกลับ</button>
-                        <button onclick="updateStatus('${d.id}', '${statusFlow[step+1]}')" class="bg-gold text-primary px-8 py-3 rounded-xl text-[11px] font-black shadow-lg hover:scale-105 active:scale-95 ${step===2?'hidden':''}">ถัดไป <i class="fa-solid fa-angle-right ml-1"></i></button>
+                        <button onclick="updateStatus('${d.id}', '${statusFlow[step-1]}')" class="text-[12px] font-black text-gray-400 hover:text-primary ${step===0?'invisible':''}">ย้อนกลับ</button>
+                        <button onclick="updateStatus('${d.id}', '${statusFlow[step+1]}')" class="bg-gold text-primary px-8 py-3.5 rounded-xl text-[12px] font-black shadow-lg hover:scale-105 active:scale-95 ${step===2?'hidden':''}">ถัดไป <i class="fa-solid fa-angle-right ml-1"></i></button>
                     </div>` : ''}
                 </div>`;
             });
