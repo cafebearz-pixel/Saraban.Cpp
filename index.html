@@ -1,93 +1,396 @@
-const SHEET_NAME = "Saraban";
-const FOLDER_ID = "ใส่_ID_โฟลเดอร์_Google_Drive_ของคุณที่นี่"; // ก๊อปปี้ ID จาก URL ของโฟลเดอร์ใน Drive มาใส่
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสารบัญทะเบียนหนังสือรับ | อบต.ชำผักแพว</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Sarabun', 'sans-serif'] },
+                    colors: { primary: '#0F2B46', primaryLight: '#1E4C7A', accent: '#D4AF37' }
+                }
+            }
+        }
+    </script>
 
-function doGet(e) {
-  const action = e.parameter.action;
-  if (action === "read") { return json(readData()); }
-  return json({ message: "Ready" });
-}
+    <style>
+        body { background-color: #f1f5f9; color: #1e293b; }
+        .card-shadow { box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+        .card-shadow:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .progress-track { position: relative; height: 6px; background: #e2e8f0; border-radius: 10px; margin: 30px 0; }
+        .progress-fill { position: absolute; height: 100%; background: #1E4C7A; border-radius: 10px; transition: width 0.4s ease; }
+        .dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; }
+        .dot.active { border-color: #1E4C7A; background: #1E4C7A; box-shadow: 0 0 0 4px rgba(30, 76, 122, 0.2); }
+        .dot-label { position: absolute; top: 18px; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
+        .dot-label.active { color: #1E4C7A; }
+    </style>
+</head>
+<body class="antialiased font-sans min-h-screen">
 
-function doPost(e) {
-  const body = JSON.parse(e.postData.contents);
-  const action = body.action;
-  
-  if (action === "create" || action === "update") {
-    return json(saveData(body.data, action));
-  } else if (action === "updateStatus") {
-    updateStatus(body.id, body.status);
-    return json({ success: true });
-  } else if (action === "delete") {
-    deleteData(body.id);
-    return json({ success: true });
-  } else if (action === "upload") {
-    return json(uploadFile(body));
-  }
-}
+    <!-- Navbar -->
+    <nav class="bg-primary text-white shadow-xl sticky top-0 z-40 h-16 flex items-center">
+        <div class="max-w-7xl mx-auto px-4 lg:px-8 w-full flex justify-between items-center">
+            <div class="flex items-center gap-2 font-bold text-lg">
+                <i class="fa-solid fa-landmark text-accent"></i> Saraban Champakpaew
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="hidden md:flex gap-1 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-4 py-2 rounded-lg bg-primaryLight transition">หน้าหลัก</button>
+                    <button onclick="switchTab('completed')" id="tab-completed" class="px-4 py-2 rounded-lg hover:bg-primaryLight transition">เสร็จสิ้นแล้ว</button>
+                    <button onclick="switchTab('search')" id="tab-search" class="px-4 py-2 rounded-lg hover:bg-primaryLight transition"><i class="fa-solid fa-search"></i></button>
+                </div>
+                <button id="authBtn" onclick="toggleAuth()" class="bg-white text-primary px-4 py-1.5 rounded-full font-bold text-xs shadow-md hover:bg-gray-100 transition">
+                    <i class="fa-solid fa-user-shield mr-1"></i> <span id="authLabel">Guest</span>
+                </button>
+            </div>
+        </div>
+    </nav>
 
-function uploadFile(obj) {
-  const folder = DriveApp.getFolderById(FOLDER_ID);
-  const blob = Utilities.newBlob(Utilities.base64Decode(obj.base64), obj.type, obj.name);
-  const file = folder.createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  return { url: file.getUrl() };
-}
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-8 w-full">
+        
+        <!-- Dashboard / Main Tab -->
+        <div id="view-dashboard" class="block">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="stats-container"></div>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-primary flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open text-accent"></i> ทะเบียนรับหนังสือ
+                </h2>
+                <button id="addDocBtn" onclick="openModal()" class="hidden bg-accent hover:bg-yellow-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i> ลงรับหนังสือ
+                </button>
+            </div>
+            <div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
 
-function getSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) { sh = ss.insertSheet(SHEET_NAME); sh.appendRow(["id", "receiveNo", "bookDate", "receivedDate", "fromOrg", "subject", "owner", "ownerReceivedDate", "status", "fileUrl"]); }
-  return sh;
-}
+        <!-- Completed Tab -->
+        <div id="view-completed" class="hidden">
+            <h2 class="text-xl font-bold text-primary mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-check-double text-green-500"></i> หนังสือที่ดำเนินการเสร็จสิ้น
+            </h2>
+            <div id="completed-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
 
-function readData() {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  if (values.length <= 1) return [];
-  const headers = values[0];
-  return values.slice(1).map(row => {
-    let obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
-    return obj;
-  }).reverse();
-}
+        <!-- Search Tab -->
+        <div id="view-search" class="hidden">
+            <div class="bg-white p-2 rounded-2xl shadow-sm mb-8 flex border border-gray-200">
+                <input type="text" id="searchInput" onkeyup="searchDocs()" placeholder="ค้นหาเลขที่, ชื่อเรื่อง, หน่วยงาน..." class="w-full px-5 py-3 outline-none text-lg">
+                <div class="bg-primary text-white px-8 flex items-center rounded-xl"><i class="fa-solid fa-search"></i></div>
+            </div>
+            <div id="search-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
 
-function saveData(data, action) {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  const rowData = [data.id, data.receiveNo, data.bookDate, data.receivedDate, data.fromOrg, data.subject, data.owner, data.ownerReceivedDate, data.status, data.fileUrl || ""];
-  
-  if (action === "create") {
-    sh.appendRow(rowData);
-  } else {
-    for (let i = 1; i < values.length; i++) {
-      if (values[i][0] === data.id) {
-        sh.getRange(i + 1, 1, 1, rowData.length).setValues([rowData]);
-        break;
-      }
-    }
-  }
-  return { success: true };
-}
+    </main>
 
-function updateStatus(id, status) {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  for (let i = 1; i < values.length; i++) {
-    if (values[i][0] === id) {
-      sh.getRange(i + 1, 9).setValue(status);
-      break;
-    }
-  }
-}
+    <!-- Form Modal -->
+    <div id="docModal" class="hidden fixed inset-0 bg-primary/40 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-2xl mx-4 my-10 relative">
+            <h3 class="text-xl font-bold text-primary mb-6" id="modalTitle">ลงรับหนังสือรับใหม่</h3>
+            <form id="docForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="docId">
+                <input type="hidden" id="f_fileUrl">
+                
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">เลขรับหนังสือ</label>
+                    <input type="text" id="f_receiveNo" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-primary">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">วันที่ออกหนังสือ</label>
+                    <input type="date" id="f_bookDate" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-primary">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">วันที่ลงรับ</label>
+                    <input type="date" id="f_receivedDate" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-primary">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">ส่งจากหน่วยงาน</label>
+                    <input type="text" id="f_fromOrg" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-primary">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">ชื่อเรื่องรับ</label>
+                    <input type="text" id="f_subject" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-primary">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">ผู้รับผิดชอบ</label>
+                    <select id="f_owner" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 outline-none focus:border-primary">
+                        <option value="">-- เลือกหน่วยงาน --</option>
+                        <option value="สำนักปลัด">สำนักปลัด</option>
+                        <option value="กองคลัง">กองคลัง</option>
+                        <option value="กองช่าง">กองช่าง</option>
+                        <option value="กองการศึกษา">กองการศึกษา</option>
+                        <option value="นักทรัพย์">นักทรัพย์</option>
+                        <option value="นิติกร">นิติกร</option>
+                        <option value="งานสภา">งานสภา</option>
+                        <option value="ธุรการ">ธุรการ</option>
+                    </select>
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-gray-400 mb-1">อัปโหลดเอกสาร (PDF)</label>
+                    <input type="file" id="fileInput" accept="application/pdf" class="text-xs block w-full text-gray-400 mt-1 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100">
+                    <p id="uploadStatus" class="text-[10px] text-blue-500 mt-1 hidden italic">กำลังเตรียมไฟล์...</p>
+                </div>
+                
+                <div class="md:col-span-2 flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="closeModal()" class="px-6 py-2 text-gray-400 font-bold hover:text-gray-600">ยกเลิก</button>
+                    <button type="button" onclick="saveDoc()" id="btnSave" class="px-10 py-2.5 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primaryLight transition">
+                        บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-function deleteData(id) {
-  const sh = getSheet();
-  const values = sh.getDataRange().getValues();
-  for (let i = values.length - 1; i >= 1; i--) {
-    if (values[i][0] === id) { sh.deleteRow(i + 1); break; }
-  }
-}
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-primary/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4">
+            <h3 class="text-xl font-bold text-center mb-6">สำหรับ Admin (รหัส: cp123)</h3>
+            <input type="password" id="passwordInput" placeholder="รหัสผ่าน" class="w-full bg-gray-100 rounded-xl p-4 text-center text-2xl tracking-widest outline-none border-2 border-transparent focus:border-primary">
+            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-bold py-4 rounded-xl mt-4 hover:bg-primaryLight shadow-lg">ยืนยัน</button>
+            <button onclick="closeLoginModal()" class="w-full text-gray-400 mt-3 text-sm py-2">ปิดหน้าต่าง</button>
+        </div>
+    </div>
 
-function json(data) {
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-}
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzbp68pMAVTctC05s_alIhRIscXNms9w-D7K5VwzAIp-_JmLKZ24PCADTRn7AmNw7T6/exec";
+        let isAdmin = false;
+        let documents = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('passwordInput').addEventListener('keyup', (e) => { if (e.key === 'Enter') attemptLogin(); });
+            fetchData();
+        });
+
+        async function fetchData() {
+            try {
+                const res = await fetch(API_URL + "?action=read");
+                documents = await res.json() || [];
+                renderAll();
+            } catch (e) { console.error("Error loading data"); }
+        }
+
+        // --- AUTH ---
+        function toggleAuth() {
+            if (isAdmin) { isAdmin = false; updateAuthUI(); } 
+            else { document.getElementById('loginModal').classList.remove('hidden'); }
+        }
+        function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+        function attemptLogin() {
+            if (document.getElementById('passwordInput').value === 'cp123') {
+                isAdmin = true; closeLoginModal(); updateAuthUI();
+                document.getElementById('passwordInput').value = '';
+            } else { alert('รหัสผ่านไม่ถูกต้อง'); }
+        }
+        function updateAuthUI() {
+            document.getElementById('authLabel').innerText = isAdmin ? 'Admin' : 'Guest';
+            document.getElementById('addDocBtn').classList.toggle('hidden', !isAdmin);
+            renderAll();
+        }
+
+        // --- NAV ---
+        function switchTab(target) {
+            ['dashboard', 'search', 'completed'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.toggle('hidden', t !== target);
+                const btn = document.getElementById(`tab-${t}`);
+                if(btn) btn.classList.toggle('bg-primaryLight', t === target);
+            });
+            renderAll();
+        }
+
+        // --- MODAL & DATA ---
+        function openModal(id = null) {
+            document.getElementById('docModal').classList.remove('hidden');
+            document.getElementById('docForm').reset();
+            document.getElementById('docId').value = '';
+            document.getElementById('f_fileUrl').value = '';
+            if (id) {
+                const d = documents.find(x => x.id === id);
+                document.getElementById('docId').value = d.id;
+                document.getElementById('f_receiveNo').value = d.receiveNo || '';
+                document.getElementById('f_bookDate').value = d.bookDate || '';
+                document.getElementById('f_receivedDate').value = d.receivedDate || '';
+                document.getElementById('f_fromOrg').value = d.fromOrg || '';
+                document.getElementById('f_subject').value = d.subject || '';
+                document.getElementById('f_owner').value = d.owner || '';
+                document.getElementById('f_fileUrl').value = d.fileUrl || '';
+            }
+        }
+        function closeModal() { document.getElementById('docModal').classList.add('hidden'); }
+
+        async function saveDoc() {
+            const fileInput = document.getElementById('fileInput');
+            const btn = document.getElementById('btnSave');
+            let fileUrl = document.getElementById('f_fileUrl').value;
+
+            btn.disabled = true;
+            btn.innerText = "กำลังดำเนินการ...";
+
+            if (fileInput.files.length > 0) {
+                document.getElementById('uploadStatus').classList.remove('hidden');
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = async function() {
+                    const base64 = reader.result.split(',')[1];
+                    try {
+                        const uploadRes = await fetch(API_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            body: JSON.stringify({ action: 'upload', base64: base64, type: file.type, name: file.name })
+                        });
+                        // เนื่องจาก no-cors จะไม่คืนค่า URL ทันทีในบางกรณี 
+                        // แต่สคริปต์ที่เราเขียนไว้จะอัปโหลดลงไดรฟ์เรียบร้อย
+                        setTimeout(() => executeSave(fileUrl), 2000); 
+                    } catch (e) { executeSave(fileUrl); }
+                };
+            } else {
+                executeSave(fileUrl);
+            }
+        }
+
+        async function executeSave(fUrl) {
+            const isEdit = !!document.getElementById('docId').value;
+            const doc = {
+                id: document.getElementById('docId').value || 'ID-' + Date.now(),
+                receiveNo: document.getElementById('f_receiveNo').value,
+                bookDate: document.getElementById('f_bookDate').value,
+                receivedDate: document.getElementById('f_receivedDate').value,
+                fromOrg: document.getElementById('f_fromOrg').value,
+                subject: document.getElementById('f_subject').value,
+                owner: document.getElementById('f_owner').value,
+                status: isEdit ? (documents.find(x => x.id === document.getElementById('docId').value).status) : "ลงรับแล้ว",
+                fileUrl: fUrl
+            };
+
+            // UI Update
+            if (isEdit) {
+                const idx = documents.findIndex(x => x.id === doc.id);
+                documents[idx] = doc;
+            } else { documents.unshift(doc); }
+            
+            renderAll();
+            closeModal();
+            
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: isEdit ? 'update' : 'create', data: doc })
+            });
+            fetchData();
+        }
+
+        async function updateStatus(id, newStatus) {
+            const d = documents.find(x => x.id === id);
+            d.status = newStatus;
+            renderAll();
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: 'updateStatus', id: id, status: newStatus })
+            });
+            fetchData();
+        }
+
+        async function deleteDoc(id) {
+            if (!confirm('ยืนยันการลบรายการนี้?')) return;
+            documents = documents.filter(x => x.id !== id);
+            renderAll();
+            await fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: 'delete', id: id })
+            });
+            fetchData();
+        }
+
+        // --- RENDER ---
+        function renderAll() {
+            updateStats();
+            renderCards(documents, 'dashboard-cards'); // หน้าแรกเห็นทั้งหมด
+            renderCards(documents.filter(x => x.status === "เสร็จสิ้น"), 'completed-cards'); // หน้าเสร็จสิ้น
+            searchDocs();
+        }
+
+        function updateStats() {
+            const container = document.getElementById('stats-container');
+            const now = new Date();
+            const thisMonth = documents.filter(x => x.receivedDate && new Date(x.receivedDate).getMonth() === now.getMonth()).length;
+            
+            container.innerHTML = `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-blue-500"><p class="text-[10px] font-bold text-gray-400 uppercase">เดือนนี้</p><h3 class="text-3xl font-black text-primary">${thisMonth}</h3></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-yellow-500"><p class="text-[10px] font-bold text-gray-400 uppercase">ลงรับแล้ว</p><h3 class="text-3xl font-black text-primary">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-indigo-500"><p class="text-[10px] font-bold text-gray-400 uppercase">กำลังเสนอ</p><h3 class="text-3xl font-black text-primary">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
+                <div class="bg-primaryLight p-5 rounded-2xl shadow-sm text-white"><p class="text-[10px] font-bold text-blue-200 uppercase">เสร็จสิ้น</p><h3 class="text-3xl font-black">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
+            `;
+        }
+
+        function searchDocs() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = documents.filter(x => 
+                (x.subject && x.subject.toLowerCase().includes(q)) || 
+                (x.receiveNo && x.receiveNo.toLowerCase().includes(q)) ||
+                (x.fromOrg && x.fromOrg.toLowerCase().includes(q))
+            );
+            renderCards(filtered, 'search-cards');
+        }
+
+        function renderCards(list, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const statusFlow = ["ลงรับแล้ว", "กำลังเสนอ", "เสร็จสิ้น"];
+
+            list.forEach(d => {
+                const currentStep = statusFlow.indexOf(d.status) === -1 ? 0 : statusFlow.indexOf(d.status);
+                const progressWidth = (currentStep / 2) * 100 + '%';
+
+                container.innerHTML += `
+                <div class="bg-white rounded-3xl p-6 card-shadow border border-gray-50 flex flex-col relative h-full">
+                    ${isAdmin ? `
+                        <div class="absolute top-4 right-4 flex gap-3 text-gray-300">
+                            <button onclick="openModal('${d.id}')" class="hover:text-blue-500 transition"><i class="fa-solid fa-edit"></i></button>
+                            <button onclick="deleteDoc('${d.id}')" class="hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="mb-4 pr-10">
+                        <span class="text-[10px] font-black bg-blue-50 text-primaryLight px-2 py-1 rounded-md border border-blue-100">เลขรับ: ${d.receiveNo || '-'}</span>
+                        <h4 class="text-md font-bold text-gray-800 mt-2 leading-snug line-clamp-2">${d.subject || 'ไม่มีชื่อเรื่อง'}</h4>
+                    </div>
+
+                    <div class="text-[12px] text-gray-500 space-y-1.5 flex-grow mb-6">
+                        <p><i class="fa-solid fa-building w-4"></i> จาก: <span class="font-bold text-gray-700">${d.fromOrg || '-'}</span></p>
+                        <p><i class="fa-solid fa-user-check w-4"></i> รับผิดชอบ: <span class="font-bold text-gray-700">${d.owner || '-'}</span></p>
+                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="inline-block mt-2 text-blue-600 font-bold hover:underline"><i class="fa-solid fa-file-pdf mr-1"></i> เปิดดูเอกสาร PDF</a>` : ''}
+                    </div>
+
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: ${progressWidth}"></div>
+                        ${statusFlow.map((s, i) => `
+                            <div class="dot ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%"></div>
+                            <div class="dot-label ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%">${s}</div>
+                        `).join('')}
+                    </div>
+
+                    ${isAdmin ? `
+                        <div class="flex justify-between mt-4 pt-2 border-t border-gray-50">
+                            <button onclick="updateStatus('${d.id}', '${statusFlow[currentStep-1]}')" 
+                                class="text-[10px] font-bold text-gray-400 hover:text-gray-600 ${currentStep === 0 ? 'invisible' : ''}">
+                                <i class="fa-solid fa-arrow-left mr-1"></i> ย้อนกลับ
+                            </button>
+                            <button onclick="updateStatus('${d.id}', '${statusFlow[currentStep+1]}')" 
+                                class="bg-primary text-white text-[10px] font-bold px-4 py-2 rounded-lg shadow-md ${currentStep === 2 ? 'hidden' : ''}">
+                                ขั้นตอนถัดไป <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>`;
+            });
+        }
+    </script>
+</body>
+</html>
