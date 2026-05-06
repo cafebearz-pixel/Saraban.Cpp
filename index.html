@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SARABAN CPP | อบต.ชำผักแพว</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 🟢 เปลี่ยนฟอนต์กลับเป็น Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -25,6 +24,11 @@
         .step-item.active .step-dot { background: #0F172A; border-color: #0F172A; }
         .step-label { font-size: 10px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
         .step-item.active .step-label { color: #0F172A; }
+        /* Calendar Styles */
+        .cal-day { min-height: 100px; border: 1px solid #f1f5f9; transition: 0.2s; cursor: pointer; }
+        .cal-day:hover { background: #f8fafc; }
+        .cal-today { background: #eff6ff; border: 2px solid #3b82f6; }
+        .cal-badge { background: #0F172A; color: white; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
     </style>
 </head>
 <body class="antialiased">
@@ -45,6 +49,7 @@
         <div class="flex flex-wrap gap-3 mb-4 bg-white/40 backdrop-blur p-2.5 rounded-[24px] border border-white shadow-sm">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="btn-tab bg-primary text-white flex-1 transition shadow-lg font-bold">หน้าแรก</button>
             <button onclick="switchTab('by-owner')" id="tab-by-owner" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">สถิติแยกกองงาน</button>
+            <button onclick="switchTab('calendar')" id="tab-calendar" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">ปฏิทินงานรับ</button>
             <button id="addDocBtn" onclick="openModal()" class="hidden bg-gold text-primary btn-tab shadow-lg transition font-black ml-auto"><i class="fa-solid fa-plus-circle mr-2"></i>ลงรับหนังสือใหม่</button>
         </div>
 
@@ -52,7 +57,7 @@
         
         <div id="view-by-owner" class="hidden">
             <div class="bg-white p-8 rounded-[35px] shadow-sm mb-8 border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="font-black text-primary uppercase">เลือกกองงานที่ต้องการตรวจสอบ</div>
+                <div class="font-black text-primary uppercase text-sm">เลือกกองงานที่ต้องการตรวจสอบ</div>
                 <select id="ownerFilter" onchange="renderByOwner()" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none font-bold w-full md:w-80">
                     <option value="">-- เลือกกองงาน --</option>
                     <option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
@@ -60,9 +65,34 @@
             </div>
             <div id="owner-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
+
+        <div id="view-calendar" class="hidden">
+            <div class="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 id="monthDisplay" class="text-2xl font-black text-primary uppercase italic">ปฏิทินเดือนนี้</h2>
+                    <div class="flex gap-2">
+                        <button onclick="changeMonth(-1)" class="p-3 bg-gray-100 rounded-xl hover:bg-primary hover:text-white transition"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button onclick="changeMonth(1)" class="p-3 bg-gray-100 rounded-xl hover:bg-primary hover:text-white transition"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 text-center font-black text-gray-400 text-[10px] mb-4 uppercase tracking-widest">
+                    <div>อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div>ส.</div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 border border-gray-50 rounded-2xl overflow-hidden shadow-inner"></div>
+            </div>
+        </div>
     </main>
 
-    <!-- Modal Form -->
+    <div id="dayModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div class="bg-white rounded-[40px] p-8 w-full max-w-2xl overflow-y-auto max-h-[80vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="dayModalTitle" class="text-xl font-black text-primary border-l-4 border-gold pl-4 uppercase">รายการหนังสือรับ</h3>
+                <button onclick="closeDayModal()" class="text-gray-400 text-2xl hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
+            <div id="dayDocList" class="space-y-4"></div>
+        </div>
+    </div>
+
     <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[40px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">ลงข้อมูลหนังสือรับ</h3>
@@ -75,7 +105,7 @@
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">วันที่ออกหนังสือ</label><input type="date" id="f_bookDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">ผู้รับผิดชอบ (กองงาน)</label>
-                    <select id="f_owner" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold">
+                    <select id="f_owner" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold text-lg">
                         <option value="">-- รอระบุ --</option><option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                     </select>
                 </div>
@@ -88,7 +118,6 @@
         </div>
     </div>
 
-    <!-- Login -->
     <div id="loginModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-6 uppercase">Admin Login</h3>
@@ -100,6 +129,8 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyGa_dNlU6HQTbRYHL5qvY0U3og8US0VCJMsEK6SaBm8U7onG7SzkrhZurYZ6H1rsFV/exec";
         let isAdmin = false, documents = [];
+        let currentCalMonth = new Date().getMonth();
+        let currentCalYear = new Date().getFullYear();
 
         function formatDateForInput(dateStr) {
             if (!dateStr) return '';
@@ -120,7 +151,15 @@
             try {
                 const res = await fetch(API_URL + "?action=read");
                 const data = await res.json();
-                if(data) { documents = data; renderAll(); }
+                if(data) { 
+                    // 🟢 ปรับการจัดเรียงตามเลขรับที่ (receiveNo2) จากมากไปน้อย
+                    documents = data.sort((a, b) => {
+                        const noA = parseInt(a.receiveNo2) || 0;
+                        const noB = parseInt(b.receiveNo2) || 0;
+                        return noB - noA;
+                    });
+                    renderAll(); 
+                }
             } catch (e) { console.error("Load Error"); }
         }
 
@@ -135,12 +174,13 @@
         }
 
         function switchTab(t) { 
-            ['dashboard', 'by-owner'].forEach(v => {
-                document.getElementById(`view-${v}`).classList.toggle('hidden', v!==t);
+            ['dashboard', 'by-owner', 'calendar'].forEach(v => {
+                const view = document.getElementById(`view-${v}`);
+                if(view) view.classList.toggle('hidden', v!==t);
                 const btn = document.getElementById(`tab-${v}`);
                 if(btn) { btn.classList.toggle('bg-primary', v===t); btn.classList.toggle('text-white', v===t); btn.classList.toggle('bg-white', v!==t); btn.classList.toggle('text-gray-400', v!==t); }
             });
-            renderAll(); 
+            if(t === 'calendar') renderCalendar();
         }
 
         function openModal(id = null) {
@@ -206,6 +246,7 @@
             renderStats();
             renderCards(documents, 'dashboard-cards');
             renderByOwner();
+            renderCalendar();
         }
 
         function renderStats() {
@@ -240,21 +281,19 @@
                     <div class="mb-6">
                         <span class="text-[10px] font-black px-3 py-1.5 rounded-lg ${d.status==='เสร็จสิ้น'?'bg-green-100 text-green-600':'bg-amber-100 text-amber-600'}">${d.status}</span>
                         <div class="mt-5 space-y-1">
-                             <!-- 🟢 แสดงเลขรับที่ -->
                              <p class="text-[13px] text-primary font-black uppercase">เลขรับที่ : <span class="bg-blue-100 px-2 py-0.5 rounded text-blue-700 font-black">${d.receiveNo2 || '-'}</span></p>
                              <p class="text-[12px] text-gray-400 font-bold uppercase">เลขรับหนังสือ : <span class="text-gray-700 font-bold">${d.receiveNo || '-'}</span></p>
                         </div>
-                        <h4 class="text-xl font-bold text-gray-800 leading-snug line-clamp-3 bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50 mt-4">${d.subject}</h4>
+                        <h4 class="text-[15px] font-bold text-gray-800 leading-relaxed bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50 mt-4 min-h-[80px]">${d.subject}</h4>
                     </div>
-                    <!-- 🟢 ปรับขนาดตัวอักษรในส่วนข้อมูลรายละเอียดให้ใหญ่ขึ้น -->
                     <div class="space-y-4 text-[14px] text-gray-600 mb-6 flex-grow border-t pt-5">
                         <div class="grid grid-cols-2 gap-4 text-[13px]">
                             <div><p class="text-gray-400 font-black uppercase text-[10px]">วันที่ออกหนังสือ</p><p class="font-bold text-gray-800 text-[14px]"><i class="fa-regular fa-calendar-check mr-1 text-gold"></i>${formatThaiDate(d.bookDate)}</p></div>
                             <div><p class="text-gray-400 font-black uppercase text-[10px]">วันที่ลงรับ</p><p class="font-bold text-gray-800 text-[14px]"><i class="fa-solid fa-calendar-day mr-1 text-blue-400"></i>${formatThaiDate(d.receivedDate)}</p></div>
                         </div>
                         <div class="pt-3 border-t border-dashed space-y-2">
-                             <p class="text-[14px]">ส่งมาจาก: <span class="font-black text-gray-900">${d.fromOrg || '-'}</span></p>
-                             <p class="text-[14px]">ผู้รับผิดชอบ: <span class="font-black text-primary">${d.owner || 'รอระบุ'}</span></p>
+                             <p class="text-[15px]">ส่งมาจาก: <span class="font-black text-gray-900">${d.fromOrg || '-'}</span></p>
+                             <p class="text-[15px]">ผู้รับผิดชอบ: <span class="font-black text-primary">${d.owner || 'รอระบุ'}</span></p>
                         </div>
                         <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
                             <p class="text-[11px] font-black text-blue-400 uppercase">กองรับหนังสือเมื่อ</p>
@@ -277,6 +316,71 @@
                 </div>`;
             });
         }
+
+        // 🟢 ระบบปฏิทิน
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const monthDisp = document.getElementById('monthDisplay');
+            grid.innerHTML = '';
+            
+            const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
+            const lastDate = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+            const today = new Date();
+            
+            monthDisp.innerText = new Date(currentCalYear, currentCalMonth).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+
+            // วันว่างช่วงต้นเดือน
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="cal-day bg-gray-50/50"></div>`;
+            }
+
+            // วันที่จริง
+            for (let day = 1; day <= lastDate; day++) {
+                const dateKey = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const docsInDay = documents.filter(d => d.receivedDate && d.receivedDate.startsWith(dateKey));
+                const isToday = today.getDate() === day && today.getMonth() === currentCalMonth && today.getFullYear() === currentCalYear;
+
+                grid.innerHTML += `
+                    <div onclick="showDayDetails('${dateKey}', ${day})" class="cal-day p-2 flex flex-col gap-1 ${isToday ? 'cal-today' : ''}">
+                        <span class="text-xs font-black ${isToday ? 'text-blue-600' : 'text-gray-400'}">${day}</span>
+                        ${docsInDay.length > 0 ? `<div class="mt-auto flex flex-col gap-1">
+                            <span class="cal-badge">${docsInDay.length} เรื่อง</span>
+                            <div class="h-1 w-full bg-gold rounded-full"></div>
+                        </div>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        function changeMonth(step) {
+            currentCalMonth += step;
+            if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+            if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+            renderCalendar();
+        }
+
+        function showDayDetails(dateKey, dayNum) {
+            const docs = documents.filter(d => d.receivedDate && d.receivedDate.startsWith(dateKey));
+            if(docs.length === 0) return;
+
+            const modal = document.getElementById('dayModal');
+            const list = document.getElementById('dayDocList');
+            document.getElementById('dayModalTitle').innerText = `รายการวันที่ ${dayNum} ${new Date(currentCalYear, currentCalMonth).toLocaleDateString('th-TH', { month: 'long' })}`;
+            
+            list.innerHTML = docs.map(d => `
+                <div class="p-4 bg-gray-50 rounded-2xl border-l-4 border-gold shadow-sm">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] font-black text-primary bg-white px-2 py-1 rounded shadow-sm">เลขรับ: ${d.receiveNo2}</span>
+                        <span class="text-[10px] font-bold text-gray-400 italic">${d.owner || 'ไม่ระบุหน่วยงาน'}</span>
+                    </div>
+                    <p class="text-sm font-bold text-gray-800">${d.subject}</p>
+                </div>
+            `).join('');
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeDayModal() { document.getElementById('dayModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
