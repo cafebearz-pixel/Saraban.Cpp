@@ -7,11 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Sarabun', 'sans-serif'] }, colors: { primary: '#0F172A', gold: '#D4AF37' } } } }
+    </script>
     <style>
         body { background: #f1f5f9; font-family: 'Sarabun', sans-serif; }
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 28px; transition: 0.3s; position: relative; }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
+        .btn-tab { padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 14px; transition: 0.2s; }
         
-        /* สไตล์ใหม่สำหรับสถานะ (Progress Bar) ป้องกันข้อความซ้อนทับ */
         .progress-wrapper { position: relative; padding: 20px 0 30px; margin-top: 20px; }
         .progress-line { height: 4px; background: #e2e8f0; border-radius: 10px; position: relative; }
         .progress-fill { position: absolute; height: 100%; background: #0F172A; border-radius: 10px; transition: 0.5s; }
@@ -25,32 +29,38 @@
 </head>
 <body class="antialiased">
 
-    <!-- Navbar และส่วนอื่นๆ เหมือนเดิม -->
-    <nav class="bg-[#0F172A] text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
+    <nav class="bg-primary text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
         <div class="flex items-center gap-3">
-            <i class="fa-solid fa-file-invoice text-[#D4AF37] text-2xl"></i>
-            <span class="font-bold tracking-tight">SARABAN CPP</span>
+            <i class="fa-solid fa-file-invoice text-gold text-2xl"></i>
+            <span class="font-bold tracking-tight uppercase">Saraban CPP</span>
         </div>
-        <button id="authBtn" onclick="toggleAuth()" class="bg-white text-[#0F172A] px-5 py-2 rounded-full text-xs font-bold transition-all">
-            <span id="authLabel">GUEST MODE</span>
+        <button id="authBtn" onclick="toggleAuth()" class="bg-white text-primary px-5 py-2 rounded-full text-xs font-bold shadow-lg transition-all hover:bg-gold hover:text-white">
+            <i class="fa-solid fa-user-shield mr-2"></i><span id="authLabel">GUEST MODE</span>
         </button>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- 🟢 กล่องสรุปตัวเลขด้านบน -->
         <div id="stats-area" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"></div>
 
         <div class="flex flex-wrap gap-3 mb-4 bg-white/40 backdrop-blur p-2.5 rounded-[24px] border border-white shadow-sm">
-            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-8 py-3 rounded-xl font-bold bg-[#0F172A] text-white flex-1 md:flex-none">หน้าแรก</button>
-            <button onclick="switchTab('by-owner')" id="tab-by-owner" class="px-8 py-3 rounded-xl font-bold bg-white text-gray-400 flex-1 md:flex-none">สถิติแยกกองงาน</button>
-            <button id="addDocBtn" onclick="openModal()" class="hidden bg-[#D4AF37] text-[#0F172A] px-8 py-3 rounded-xl font-black ml-auto">ลงรับหนังสือใหม่</button>
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="btn-tab bg-primary text-white flex-1 shadow-lg transition">หน้าแรก (ทะเบียนล่าสุด)</button>
+            <button onclick="switchTab('by-owner')" id="tab-by-owner" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 shadow-sm transition">สถิติแยกกองงาน</button>
+            <!-- 🟢 ปุ่มลงรับหนังสือ (จะโชว์เมื่อ Login) -->
+            <button id="addDocBtn" onclick="openModal()" class="hidden bg-gold text-primary btn-tab shadow-lg transition font-black">ลงรับหนังสือใหม่</button>
         </div>
 
-        <div id="view-dashboard" class="block"><div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
+        <div class="relative mb-10">
+            <i class="fa-solid fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 text-lg"></i>
+            <input type="text" id="searchInput" onkeyup="searchDocs()" placeholder="ค้นหาเลขรับหนังสือ, ชื่อเรื่อง, หรือหน่วยงาน..." class="w-full pl-16 pr-8 py-5 rounded-[24px] border-none shadow-md outline-none focus:ring-4 focus:ring-primary/10 text-lg bg-white">
+        </div>
+
+        <div id="view-dashboard" class="block animate-fade-in"><div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
         
-        <div id="view-by-owner" class="hidden">
+        <div id="view-by-owner" class="hidden animate-fade-in">
             <div class="bg-white p-8 rounded-[35px] shadow-sm mb-8 border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="font-black text-[#0F172A] uppercase">ตรวจสอบตามกองงาน</div>
-                <select id="ownerFilter" onchange="renderByOwner()" class="bg-gray-100 p-4 rounded-2xl outline-none font-bold w-full md:w-80">
+                <div><h3 class="text-xl font-black text-primary uppercase">สถิติกองงาน</h3><p class="text-gray-400 text-sm">เลือกกองงานเพื่อสรุปยอดเดือนนี้</p></div>
+                <select id="ownerFilter" onchange="renderByOwner()" class="w-full md:w-80 bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 outline-none font-bold focus:border-primary">
                     <option value="">-- เลือกกองงาน --</option>
                     <option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                 </select>
@@ -59,62 +69,138 @@
         </div>
     </main>
 
-    <!-- Modal Form และ Script แก้ไขชื่อ ID ให้ตรงกับชีท -->
+    <!-- 🟢 หน้าต่างกรอกข้อมูล (Modal) -->
+    <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-[40px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl">
+            <h3 class="text-xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">บันทึกข้อมูลหนังสือรับ</h3>
+            <form id="docForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <input type="hidden" id="docId">
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400">เลขรับหนังสือ</label><input type="text" id="f_receiveNo" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
+                <div class="md:col-span-2"><label class="text-[10px] font-black text-gray-400">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400">วันที่ออกหนังสือ</label><input type="date" id="f_bookDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 tracking-widest uppercase">กองงาน</label>
+                    <select id="f_owner" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold">
+                        <option value="">-- รอระบุ --</option><option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3"><label class="text-[10px] font-black text-blue-400 uppercase tracking-widest">ลิงก์ Google Drive (PDF)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 outline-none text-blue-600 font-medium"></div>
+                <div class="md:col-span-3 flex justify-end gap-3 mt-4 border-t pt-8">
+                    <button type="button" onclick="closeModal()" class="px-8 py-3 text-gray-400 font-bold">ยกเลิก</button>
+                    <button type="button" onclick="saveDoc()" id="btnSave" class="px-14 py-4 bg-primary text-white font-black rounded-2xl shadow-xl transition">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🟢 หน้าต่าง Login -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl">
+            <h3 class="text-2xl font-black text-primary mb-6">ADMIN LOGIN</h3>
+            <input type="password" id="passwordInput" placeholder="••••" class="w-full bg-gray-100 rounded-2xl p-5 text-center text-4xl tracking-widest outline-none border-2 focus:border-primary mb-6">
+            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-xl transition hover:bg-black">ยืนยัน</button>
+        </div>
+    </div>
+
     <script>
-        const API_URL = "วาง URL ที่คัดลอกมาตรงนี้";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzbp68pMAVTctC05s_alIhRIscXNms9w-D7K5VwzAIp-_JmLKZ24PCADTRn7AmNw7T6/exec";
         let isAdmin = false, documents = [];
 
+        document.addEventListener('DOMContentLoaded', () => {
+            const cache = localStorage.getItem('saraban_cache');
+            if(cache) { documents = JSON.parse(cache); renderAll(); }
+            fetchData();
+        });
+
         async function fetchData() {
-            const res = await fetch(API_URL + "?action=read");
-            documents = await res.json() || [];
+            try {
+                const res = await fetch(API_URL + "?action=read");
+                const data = await res.json();
+                if(data) { documents = data; localStorage.setItem('saraban_cache', JSON.stringify(data)); renderAll(); }
+            } catch (e) { console.log("Load error"); }
+        }
+
+        function toggleAuth() { if(isAdmin) { isAdmin = false; updateAuthUI(); } else { document.getElementById('loginModal').classList.remove('hidden'); } }
+        function attemptLogin() { if(document.getElementById('passwordInput').value === 'cp123'){ isAdmin=true; updateAuthUI(); document.getElementById('loginModal').classList.add('hidden'); document.getElementById('passwordInput').value=''; } else alert('รหัสผิด'); }
+        function updateAuthUI() {
+            document.getElementById('authLabel').innerText = isAdmin ? "ADMIN MODE" : "GUEST MODE";
+            document.getElementById('addDocBtn').classList.toggle('hidden', !isAdmin);
             renderAll();
         }
 
-        // ฟังก์ชัน renderCards ปรับปรุง Progress Bar
+        function switchTab(t) { 
+            ['dashboard', 'by-owner'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.toggle('hidden', v!==t);
+                const btn = document.getElementById(`tab-${v}`);
+                if(btn) { btn.classList.toggle('bg-primary', v===t); btn.classList.toggle('text-white', v===t); btn.classList.toggle('bg-white', v!==t); btn.classList.toggle('text-gray-400', v!==t); }
+            });
+            renderAll(); 
+        }
+
+        function openModal(id = null) {
+            document.getElementById('docModal').classList.remove('hidden');
+            document.getElementById('docForm').reset();
+            document.getElementById('docId').value = id || '';
+        }
+        function closeModal() { document.getElementById('docModal').classList.add('hidden'); }
+
+        async function saveDoc() {
+            const btn = document.getElementById('btnSave');
+            btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+            const id = document.getElementById('docId').value || 'ID-' + Date.now();
+            const doc = {
+                id: id, receiveNo: document.getElementById('f_receiveNo').value, subject: document.getElementById('f_subject').value,
+                owner: document.getElementById('f_owner').value, fileUrl: document.getElementById('f_fileUrl').value.trim(),
+                status: "ลงรับแล้ว"
+            };
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'create', data: doc }) });
+            closeModal(); fetchData(); btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
+        }
+
+        function renderAll() {
+            renderStats();
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = documents.filter(x => (x.subject||'').toLowerCase().includes(q) || (x.receiveNo||'').toLowerCase().includes(q));
+            renderCards(filtered, 'dashboard-cards');
+        }
+
+        function renderStats() {
+            const area = document.getElementById('stats-area');
+            area.innerHTML = `
+                <div class="glass-card p-6 border-l-4 border-primary"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">เดือนนี้</p><h3 class="text-3xl font-black text-primary">${documents.length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-amber-500"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ลงรับแล้ว</p><h3 class="text-3xl font-black text-amber-500">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-indigo-500"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">กำลังเสนอ</p><h3 class="text-3xl font-black text-indigo-500">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
+                <div class="bg-primary p-6 rounded-[28px] shadow-2xl text-white"><p class="text-[10px] font-black text-blue-200 uppercase tracking-widest">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
+            `;
+        }
+
         function renderCards(list, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
+            const container = document.getElementById(containerId); container.innerHTML = '';
             const statusFlow = ["ลงรับแล้ว", "กำลังเสนอ", "เสร็จสิ้น"];
-            
             list.forEach(d => {
-                const currentStep = statusFlow.indexOf(d.status);
-                const progressWidth = (currentStep / 2) * 100 + '%';
-                const hasLink = d.fileUrl && d.fileUrl.length > 5;
-
+                const step = statusFlow.indexOf(d.status);
+                const progressWidth = (step / 2) * 100 + '%';
                 container.innerHTML += `
-                <div class="glass-card p-8 flex flex-col h-full">
+                <div class="glass-card p-8 flex flex-col h-full border-2 border-transparent hover:border-primary/10">
                     <div class="mb-6">
-                        <span class="text-[10px] font-black px-2 py-1 rounded-lg bg-amber-100 text-amber-600">${d.status}</span>
-                        <div class="text-xs text-gray-400 mt-4 uppercase">เลขรับหนังสือ :</div>
-                        <div class="text-xl font-black text-[#0F172A] mb-2">${d.receiveNo || '-'}</div>
-                        <div class="text-sm font-bold text-gray-700 line-clamp-2">${d.subject}</div>
+                        <span class="text-[10px] font-black px-2.5 py-1 rounded-lg ${d.status==='เสร็จสิ้น' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}">${d.status}</span>
+                        <p class="text-xs font-black text-primary/30 uppercase mt-4 mb-1">เลขรับหนังสือ :</p>
+                        <h5 class="text-xl font-black text-primary tracking-tighter">${d.receiveNo || '-'}</h5>
+                        <h4 class="text-md font-bold text-gray-700 leading-snug line-clamp-2">${d.subject || 'ไม่มีเรื่อง'}</h4>
                     </div>
-                    
-                    <div class="flex-grow border-t pt-4 space-y-2 text-xs text-gray-500">
-                        <div>จาก: <span class="font-bold text-gray-700">${d.fromOrg || '-'}</span></div>
-                        <div>ผู้รับผิดชอบ: <span class="font-bold text-gray-700">${d.owner || 'รอระบุ'}</span></div>
-                        ${hasLink ? `<a href="${d.fileUrl}" target="_blank" class="block w-full bg-blue-600 text-white text-center py-3 rounded-2xl font-bold mt-4">เปิดดูเอกสาร PDF</a>` : ''}
+                    <div class="space-y-3 text-xs text-gray-500 mb-8 flex-grow border-t pt-5">
+                        <p><i class="fa-solid fa-user-circle w-4"></i> ผู้รับผิดชอบ: <span class="font-bold text-gray-700 ml-1">${d.owner || 'รอระบุ'}</span></p>
+                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs mt-6 shadow-xl hover:bg-blue-700 transition"><i class="fa-solid fa-file-pdf text-lg"></i> เปิดดูเอกสาร PDF</a>`:''}
                     </div>
-
                     <div class="progress-wrapper">
-                        <div class="progress-line">
-                            <div class="progress-fill" style="width: ${progressWidth}"></div>
-                        </div>
+                        <div class="progress-line"><div class="progress-fill" style="width: ${progressWidth}"></div></div>
                         <div class="status-steps">
-                            ${statusFlow.map((s, i) => `
-                                <div class="step ${currentStep >= i ? 'active' : ''}">
-                                    <div class="step-dot"></div>
-                                    <div class="step-label">${s}</div>
-                                </div>
-                            `).join('')}
+                            ${statusFlow.map((s, i) => `<div class="step ${step >= i ? 'active' : ''}"><div class="step-dot"></div><div class="step-label">${s}</div></div>`).join('')}
                         </div>
                     </div>
                 </div>`;
             });
         }
-        
-        // รัน fetchData ทันที
-        document.addEventListener('DOMContentLoaded', fetchData);
     </script>
 </body>
 </html>
