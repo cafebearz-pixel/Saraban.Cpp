@@ -3,36 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>eSaraban PRO</title>
+<title>eSaraban PRO+</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-body { font-family: 'Prompt'; background:#f1f5f9; }
-.sidebar { background: linear-gradient(180deg,#2563eb,#1e3a8a); }
+body { font-family:'Prompt'; background:#f1f5f9; }
+.sidebar { background:linear-gradient(180deg,#2563eb,#1e3a8a); }
 </style>
-
 </head>
 
 <body class="flex">
 
 <!-- SIDEBAR -->
 <div id="sidebar" class="sidebar w-64 min-h-screen text-white p-6">
-
 <h1 class="text-xl font-bold mb-6">eSaraban</h1>
 
 <div class="space-y-3 text-sm">
-
-<div onclick="switchPage('home')" class="p-3 bg-white/20 rounded-xl cursor-pointer">🏠 หน้าหลัก</div>
-<div onclick="switchPage('receive')" class="p-3 cursor-pointer">📥 หนังสือรับ</div>
-<div onclick="switchPage('send')" class="p-3 cursor-pointer">📤 หนังสือส่ง</div>
-<div onclick="switchPage('request')" class="p-3 cursor-pointer">📄 ใบคำร้อง</div>
-<div onclick="switchPage('done')" class="p-3 cursor-pointer">✅ เสร็จสิ้นแล้ว</div>
-
+<div class="p-3 bg-white/20 rounded-xl">🏠 หน้าหลัก</div>
+<div class="p-3">📄 หนังสือทั้งหมด</div>
+<div class="p-3">📅 ปฏิทิน</div>
 </div>
-
 </div>
 
 <!-- MAIN -->
@@ -40,41 +32,38 @@ body { font-family: 'Prompt'; background:#f1f5f9; }
 
 <!-- TOP -->
 <div class="bg-white p-4 flex justify-between items-center shadow">
-
-<div class="flex items-center gap-3">
+<div class="flex gap-3 items-center">
 <button onclick="toggleSidebar()">☰</button>
-<h2 class="font-bold">ระบบสารบรรณ</h2>
+<h2 class="font-bold">ระบบสารบรรณ อบต.ชำผักแพว</h2>
 </div>
 
 <div class="flex gap-2">
-
 <button onclick="openLogin()" class="bg-blue-500 text-white px-3 py-1 rounded">Admin</button>
-
+<img src="https://i.pravatar.cc/40" class="w-8 h-8 rounded-full">
+</div>
 </div>
 
-</div>
+<div class="p-6 grid lg:grid-cols-3 gap-6">
 
-<div class="p-6">
+<!-- LEFT -->
+<div class="lg:col-span-2">
 
-<!-- ADD BUTTON -->
-<button id="addBtn" onclick="openForm()" class="hidden bg-green-500 text-white px-4 py-2 rounded mb-4">
-+ ลงรับหนังสือ
-</button>
-
-<!-- SEARCH -->
-<input id="search" placeholder="ค้นหา..." class="w-full p-3 rounded border mb-4">
+<!-- DASHBOARD -->
+<div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
 
 <!-- TABLE -->
-<div class="bg-white p-4 rounded shadow">
+<div class="bg-white rounded-xl shadow p-4">
+
+<h3 class="font-bold mb-3">หนังสือล่าสุด</h3>
 
 <table class="w-full text-sm">
-<thead>
+<thead class="border-b">
 <tr>
 <th>เลขรับ</th>
 <th>เรื่อง</th>
 <th>จาก</th>
+<th>วันที่</th>
 <th>สถานะ</th>
-<th id="adminCol" class="hidden">จัดการ</th>
 </tr>
 </thead>
 
@@ -86,19 +75,22 @@ body { font-family: 'Prompt'; background:#f1f5f9; }
 
 </div>
 
+<!-- RIGHT -->
+<div class="space-y-6">
+
+<!-- NOTIFY -->
+<div class="bg-white p-4 rounded-xl shadow">
+<h3 class="font-bold mb-3">แจ้งเตือน</h3>
+<ul id="notify"></ul>
 </div>
 
-<!-- FORM MODAL -->
-<div id="formModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
+<!-- CALENDAR -->
+<div class="bg-white p-4 rounded-xl shadow">
+<h3 class="font-bold mb-3">ปฏิทิน</h3>
+<div id="calendar" class="grid grid-cols-7 text-center text-xs gap-1"></div>
+</div>
 
-<div class="bg-white p-6 rounded w-96">
-
-<h3 class="font-bold mb-4">ลงรับหนังสือ</h3>
-
-<input id="subject" placeholder="เรื่อง" class="border p-2 w-full mb-2">
-<input id="from" placeholder="จาก" class="border p-2 w-full mb-2">
-
-<button onclick="save()" class="bg-green-500 text-white w-full p-2">บันทึก</button>
+</div>
 
 </div>
 
@@ -106,77 +98,78 @@ body { font-family: 'Prompt'; background:#f1f5f9; }
 
 <!-- LOGIN -->
 <div id="loginModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
-
-<div class="bg-white p-6 rounded">
-
+<div class="bg-white p-6 rounded text-center">
 <input id="pass" type="password" class="border p-3 mb-3">
-
 <button onclick="login()" class="bg-blue-500 text-white p-2 w-full">Login</button>
-
 </div>
-
 </div>
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbyGa_dNlU6HQTbRYHL5qvY0U3og8US0VCJMsEK6SaBm8U7onG7SzkrhZurYZ6H1rsFV/exec";
+const API="https://script.google.com/macros/s/AKfycbyGa_dNlU6HQTbRYHL5qvY0U3og8US0VCJMsEK6SaBm8U7onG7SzkrhZurYZ6H1rsFV/exec";
 
-let docs = [];
-let isAdmin = false;
-let currentPage = "home";
+let docs=[];
+let isAdmin=false;
 
 /* LOAD */
 async function load(){
-let res = await fetch(API + "?action=read");
-docs = await res.json();
+let res=await fetch(API+"?action=read");
+docs=await res.json();
 render();
-}
-
-/* SWITCH PAGE */
-function switchPage(p){
-currentPage = p;
-render();
-}
-
-/* FILTER */
-function getData(){
-if(currentPage==="receive") return docs.filter(d=>d.type==="receive");
-if(currentPage==="send") return docs.filter(d=>d.type==="send");
-if(currentPage==="request") return docs.filter(d=>d.type==="request");
-if(currentPage==="done") return docs.filter(d=>d.status==="เสร็จสิ้น");
-return docs;
 }
 
 /* RENDER */
 function render(){
 
-let data = getData();
+// DASHBOARD
+stats.innerHTML=`
+<div class="bg-blue-500 text-white p-4 rounded-xl">ทั้งหมด ${docs.length}</div>
+<div class="bg-green-500 text-white p-4 rounded-xl">ลงรับ ${docs.filter(d=>d.status==="ลงรับแล้ว").length}</div>
+<div class="bg-orange-500 text-white p-4 rounded-xl">เสนอ ${docs.filter(d=>d.status==="กำลังเสนอ").length}</div>
+<div class="bg-purple-500 text-white p-4 rounded-xl">เสร็จ ${docs.filter(d=>d.status==="เสร็จสิ้น").length}</div>
+`;
 
-table.innerHTML = data.map(d=>`
+// TABLE
+table.innerHTML=docs.map(d=>`
 <tr class="border-b">
-
-<td>${d.receiveNo2 || '-'}</td>
+<td>${d.receiveNo2||'-'}</td>
 <td>${d.subject}</td>
-<td>${d.fromOrg || '-'}</td>
+<td>${d.fromOrg||'-'}</td>
+<td>${formatDate(d.receivedDate)}</td>
 <td>${d.status}</td>
-
-${isAdmin ? `<td>
-<button onclick="updateStatus('${d.id}','เสร็จสิ้น')" class="text-green-500">จบงาน</button>
-</td>`:''}
-
 </tr>
 `).join('');
 
+// NOTIFY
+notify.innerHTML=docs.slice(0,5).map(d=>`
+<li class="text-sm border-b py-1">📄 ${d.subject}</li>
+`).join('');
+
+// CALENDAR
+renderCalendar();
+
 }
 
-/* SEARCH */
-search.onkeyup = function(){
-let q = this.value.toLowerCase();
-let filtered = docs.filter(d => d.subject.toLowerCase().includes(q));
-table.innerHTML = filtered.map(d=>`<tr><td>${d.subject}</td></tr>`).join('');
+/* CALENDAR */
+function renderCalendar(){
+calendar.innerHTML="";
+for(let i=1;i<=30;i++){
+calendar.innerHTML+=`<div class="p-2 border">${i}</div>`;
+}
 }
 
-/* ADMIN */
+/* DATE */
+function formatDate(d){
+if(!d) return '-';
+return new Date(d).toLocaleDateString('th-TH');
+}
+
+/* SIDEBAR */
+function toggleSidebar(){
+sidebar.classList.toggle("hidden");
+}
+
+/* LOGIN */
 function openLogin(){
 loginModal.classList.remove("hidden");
 }
@@ -185,51 +178,11 @@ function login(){
 if(pass.value==="123456"){
 isAdmin=true;
 loginModal.classList.add("hidden");
-addBtn.classList.remove("hidden");
-adminCol.classList.remove("hidden");
-render();
+alert("เข้าสู่โหมด Admin");
 }
 }
 
-/* FORM */
-function openForm(){
-formModal.classList.remove("hidden");
-}
-
-async function save(){
-
-let data = {
-subject: subject.value,
-fromOrg: from.value,
-status: "ลงรับแล้ว",
-type: "receive"
-};
-
-await fetch(API,{
-method:"POST",
-mode:"no-cors",
-body: JSON.stringify({action:"create", data})
-});
-
-formModal.classList.add("hidden");
-load();
-}
-
-/* UPDATE */
-async function updateStatus(id,status){
-await fetch(API,{
-method:"POST",
-mode:"no-cors",
-body: JSON.stringify({action:"updateStatus", id, status})
-});
-load();
-}
-
-/* SIDEBAR */
-function toggleSidebar(){
-sidebar.classList.toggle("hidden");
-}
-
+/* START */
 load();
 
 </script>
