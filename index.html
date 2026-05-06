@@ -3,222 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>SARABAN CPP</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:'Prompt';background:#f1f5f9;}
-.status{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:bold;}
+body{font-family:'Prompt',sans-serif;background:#f1f5f9}
 </style>
-
 </head>
 
 <body>
 
-<!-- HEADER -->
+<!-- TOP -->
 <div class="bg-[#0F172A] text-white p-4 flex justify-between items-center">
-<h1 class="font-bold">📄 SARABAN CPP</h1>
+  <h1 class="font-bold text-lg">SARABAN CPP</h1>
 
-<div class="flex gap-2">
-<button onclick="exportExcel()" class="bg-green-500 px-3 py-1 rounded text-sm">Export</button>
-<button onclick="login()" class="bg-white text-black px-3 py-1 rounded text-sm">Admin</button>
+  <!-- ❌ ไม่มี export แล้ว -->
+  <button onclick="login()" class="bg-white text-black px-4 py-2 rounded-xl font-bold">
+    Admin
+  </button>
 </div>
 
-</div>
+<div class="p-4 max-w-7xl mx-auto">
 
-<div class="max-w-7xl mx-auto p-6">
+  <!-- STATS -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
-<!-- STATS -->
-<div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+    <div class="bg-blue-500 text-white p-4 rounded-xl">
+      <p>ทั้งหมด</p>
+      <h2 id="total">0</h2>
+    </div>
 
-<!-- SEARCH -->
-<input id="search" placeholder="ค้นหา..."
-class="w-full p-4 rounded-xl border mb-6">
+    <div class="bg-green-500 text-white p-4 rounded-xl">
+      <p>ลงรับ</p>
+      <h2 id="received">0</h2>
+    </div>
 
-<!-- TABLE -->
-<div class="bg-white rounded-xl shadow overflow-x-auto">
+    <div class="bg-orange-500 text-white p-4 rounded-xl">
+      <p>เสนอ</p>
+      <h2 id="process">0</h2>
+    </div>
 
-<table class="w-full text-sm">
+    <div class="bg-purple-500 text-white p-4 rounded-xl">
+      <p>เสร็จ</p>
+      <h2 id="done">0</h2>
+    </div>
 
-<thead class="bg-gray-100 text-gray-600">
-<tr>
-<th class="p-3">เลขรับ</th>
-<th class="p-3">เลขหนังสือ</th>
-<th class="p-3">วันที่ออก</th>
-<th class="p-3">เรื่อง</th>
-<th class="p-3">จาก</th>
-<th class="p-3">วันที่ลงรับ</th>
-<th class="p-3">สถานะ</th>
-<th class="p-3">กอง</th>
-<th id="adminCol" class="p-3 hidden">จัดการ</th>
-</tr>
-</thead>
+  </div>
 
-<tbody id="table"></tbody>
+  <!-- SEARCH -->
+  <input id="search" onkeyup="renderAll()" placeholder="ค้นหา..."
+    class="w-full p-4 rounded-xl mb-6 border">
 
-</table>
+  <!-- TABLE -->
+  <div class="bg-white rounded-xl shadow overflow-x-auto">
 
-</div>
+    <table class="w-full text-sm">
+
+      <thead class="bg-gray-100 text-gray-600">
+        <tr>
+          <th class="p-3 text-left">เลขรับ</th>
+          <th class="p-3 text-left">เรื่อง</th>
+          <th class="p-3 text-left">จาก</th>
+          <th class="p-3 text-left">วันที่ออก</th>
+          <th class="p-3 text-left">วันที่รับ</th>
+          <th class="p-3 text-left">สถานะ</th>
+          <th class="p-3 text-left">กอง</th>
+        </tr>
+      </thead>
+
+      <tbody id="tableBody"></tbody>
+
+    </table>
+
+  </div>
 
 </div>
 
 <script>
 
-const API="https://script.google.com/macros/s/AKfycbyGa_dNlU6HQTbRYHL5qvY0U3og8US0VCJMsEK6SaBm8U7onG7SzkrhZurYZ6H1rsFV/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyGa_dNlU6HQTbRYHL5qvY0U3og8US0VCJMsEK6SaBm8U7onG7SzkrhZurYZ6H1rsFV/exec";
 
-let docs=[];
-let isAdmin=false;
+let documents = [];
+let isAdmin = false;
 
-/* LOAD */
-async function load(){
-let res=await fetch(API+"?action=read");
-docs=await res.json();
-
-// เรียงเลขรับ
-docs.sort((a,b)=>(parseInt(a.receiveNo2)||0)-(parseInt(b.receiveNo2)||0));
-
-render(docs);
-}
-
-/* RENDER */
-function render(data){
-
-// STATS
-stats.innerHTML=`
-<div class="bg-blue-500 text-white p-4 rounded-xl">ทั้งหมด ${data.length}</div>
-<div class="bg-green-500 text-white p-4 rounded-xl">ลงรับ ${count('ลงรับแล้ว')}</div>
-<div class="bg-orange-500 text-white p-4 rounded-xl">เสนอ ${count('กำลังเสนอ')}</div>
-<div class="bg-purple-500 text-white p-4 rounded-xl">เสร็จ ${count('เสร็จสิ้น')}</div>
-`;
-
-table.innerHTML=data.map(d=>`
-<tr class="border-b hover:bg-gray-50">
-
-<td class="p-3 font-bold">${d.receiveNo2||'-'}</td>
-<td class="p-3">${d.receiveNo||'-'}</td>
-<td class="p-3">${date(d.bookDate)}</td>
-<td class="p-3 font-semibold">${d.subject}</td>
-<td class="p-3">${d.fromOrg||'-'}</td>
-<td class="p-3">${date(d.receivedDate)}</td>
-<td class="p-3">${badge(d.status)}</td>
-<td class="p-3">${d.owner||'-'}</td>
-
-${isAdmin ? `
-<td class="p-3 flex gap-2">
-<button onclick="edit('${d.id}')" class="text-blue-500">✏️</button>
-<button onclick="del('${d.id}')" class="text-red-500">🗑️</button>
-<button onclick="next('${d.id}')" class="text-green-500">➡️</button>
-</td>`:''}
-
-</tr>
-`).join('');
-
-}
-
-/* STATUS COUNT */
-function count(s){
-return docs.filter(d=>d.status===s).length;
-}
-
-/* STATUS COLOR */
-function badge(s){
-if(s==="ลงรับแล้ว") return `<span class="status bg-blue-100 text-blue-600">${s}</span>`;
-if(s==="กำลังเสนอ") return `<span class="status bg-orange-100 text-orange-600">${s}</span>`;
-if(s==="เสร็จสิ้น") return `<span class="status bg-green-100 text-green-600">${s}</span>`;
-return s;
-}
-
-/* DATE */
-function date(d){
-if(!d) return '-';
-return new Date(d).toLocaleDateString('th-TH');
-}
-
-/* SEARCH */
-search.onkeyup=function(){
-let q=this.value.toLowerCase();
-render(docs.filter(d=>
-`${d.receiveNo2} ${d.subject} ${d.fromOrg}`.toLowerCase().includes(q)
-));
-}
-
-/* ADMIN LOGIN */
 function login(){
-let p=prompt("รหัส:");
-if(p==="123456"){
-isAdmin=true;
-adminCol.classList.remove("hidden");
-render(docs);
-}
-}
-
-/* NEXT STATUS */
-async function next(id){
-let d=docs.find(x=>x.id===id);
-let nextStatus="เสร็จสิ้น";
-
-if(d.status==="ลงรับแล้ว") nextStatus="กำลังเสนอ";
-else if(d.status==="กำลังเสนอ") nextStatus="เสร็จสิ้น";
-
-await fetch(API,{
-method:"POST",
-mode:"no-cors",
-body:JSON.stringify({action:"updateStatus",id,status:nextStatus})
-});
-load();
+  const pass = prompt("ใส่รหัส");
+  if(pass === "123456"){
+    isAdmin = true;
+    alert("เข้าโหมด Admin");
+  }else{
+    alert("รหัสผิด");
+  }
 }
 
-/* DELETE */
-async function del(id){
-if(!confirm("ลบ?")) return;
-
-await fetch(API,{
-method:"POST",
-mode:"no-cors",
-body:JSON.stringify({action:"delete",id})
-});
-load();
+function formatDate(d){
+  if(!d) return "-";
+  return new Date(d).toLocaleDateString('th-TH');
 }
 
-/* EDIT */
-function edit(id){
-let d=docs.find(x=>x.id===id);
-
-let subject=prompt("เรื่อง:",d.subject);
-if(!subject) return;
-
-fetch(API,{
-method:"POST",
-mode:"no-cors",
-body:JSON.stringify({
-action:"update",
-data:{...d,subject}
-})
-});
-load();
+function renderStatus(status){
+  if(status==="ลงรับแล้ว") return `<span class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full">ลงรับแล้ว</span>`;
+  if(status==="กำลังเสนอ") return `<span class="px-3 py-1 bg-orange-100 text-orange-600 rounded-full">กำลังเสนอ</span>`;
+  if(status==="เสร็จสิ้น") return `<span class="px-3 py-1 bg-green-100 text-green-600 rounded-full">เสร็จสิ้น</span>`;
+  return `<span class="px-3 py-1 bg-gray-100 text-gray-500 rounded-full">-</span>`;
 }
 
-/* EXPORT */
-function exportExcel(){
+function renderTable(list){
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
 
-let csv="เลขรับ,เลขหนังสือ,วันที่ออก,เรื่อง,จาก,วันที่รับ,สถานะ,กอง\n";
+  list.forEach(d=>{
+    tbody.innerHTML += `
+    <tr class="border-b hover:bg-gray-50">
 
-docs.forEach(d=>{
-csv+=`${d.receiveNo2},${d.receiveNo},${d.bookDate},${d.subject},${d.fromOrg},${d.receivedDate},${d.status},${d.owner}\n`;
-});
+      <td class="p-3 font-bold">${d.receiveNo2 || '-'}</td>
 
-let blob=new Blob([csv]);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="saraban.csv";
-a.click();
+      <!-- 🔥 รวมเลขหนังสือ + เรื่อง -->
+      <td class="p-3">
+        <div class="text-xs text-gray-400">${d.receiveNo || ''}</div>
+        <div class="font-semibold">${d.subject || '-'}</div>
+      </td>
 
+      <td class="p-3">${d.fromOrg || '-'}</td>
+      <td class="p-3">${formatDate(d.bookDate)}</td>
+      <td class="p-3">${formatDate(d.receivedDate)}</td>
+      <td class="p-3">${renderStatus(d.status)}</td>
+      <td class="p-3">${d.owner || '-'}</td>
+
+    </tr>
+    `;
+  });
 }
 
-load();
+function renderStats(list){
+  document.getElementById("total").innerText = list.length;
+  document.getElementById("received").innerText = list.filter(x=>x.status==="ลงรับแล้ว").length;
+  document.getElementById("process").innerText = list.filter(x=>x.status==="กำลังเสนอ").length;
+  document.getElementById("done").innerText = list.filter(x=>x.status==="เสร็จสิ้น").length;
+}
+
+function renderAll(){
+  const q = document.getElementById("search").value.toLowerCase();
+
+  let filtered = documents.filter(d=>{
+    const text = `${d.receiveNo2} ${d.receiveNo} ${d.subject} ${d.fromOrg}`.toLowerCase();
+    return text.includes(q);
+  });
+
+  renderStats(filtered);
+  renderTable(filtered);
+}
+
+async function fetchData(){
+  const res = await fetch(API_URL+"?action=read");
+  const data = await res.json();
+
+  // 🔥 เรียงเลขรับจากน้อยไปมาก
+  documents = data.sort((a,b)=>{
+    return (parseInt(a.receiveNo2)||0)-(parseInt(b.receiveNo2)||0);
+  });
+
+  renderAll();
+}
+
+fetchData();
 
 </script>
 
