@@ -16,14 +16,13 @@
         .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
         .btn-tab { padding: 14px 28px; border-radius: 16px; font-weight: 700; font-size: 15px; transition: 0.2s; }
         
-        /* Progress Bar สไตล์ใหม่ที่ข้อความไม่ซ้อน */
         .progress-wrapper { position: relative; padding: 10px 0 25px; margin-top: 25px; border-top: 1px solid #f1f5f9; }
         .progress-line-bg { height: 4px; background: #e2e8f0; border-radius: 10px; position: relative; margin: 0 15px; }
         .progress-line-fill { position: absolute; height: 100%; background: #0F172A; border-radius: 10px; transition: 0.5s; }
         .status-steps { display: flex; justify-content: space-between; position: absolute; width: 100%; top: 4px; left: 0; }
         .step-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
         .step-dot { width: 12px; height: 12px; border-radius: 50%; background: white; border: 2px solid #cbd5e1; z-index: 10; margin-bottom: 8px; transition: 0.3s; }
-        .step-item.active .step-dot { background: #0F172A; border-color: #0F172A; box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.05); }
+        .step-item.active .step-dot { background: #0F172A; border-color: #0F172A; }
         .step-label { font-size: 9px; font-weight: 700; color: #94a3b8; white-space: nowrap; }
         .step-item.active .step-label { color: #0F172A; }
     </style>
@@ -42,28 +41,24 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Big Number Stats -->
         <div id="stats-area" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"></div>
 
-        <!-- Navigation -->
         <div class="flex flex-wrap gap-3 mb-4 bg-white/40 backdrop-blur p-2.5 rounded-[24px] border border-white shadow-sm">
-            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="btn-tab bg-primary text-white flex-1 transition shadow-lg font-bold">หน้าแรก (รายการล่าสุด)</button>
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="btn-tab bg-primary text-white flex-1 transition shadow-lg font-bold">หน้าแรก</button>
             <button onclick="switchTab('by-owner')" id="tab-by-owner" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 transition shadow-sm font-bold">สถิติแยกกองงาน</button>
             <button id="addDocBtn" onclick="openModal()" class="hidden bg-gold text-primary btn-tab shadow-lg transition font-black ml-auto"><i class="fa-solid fa-plus-circle mr-2"></i>ลงรับหนังสือใหม่</button>
         </div>
 
-        <!-- Search -->
-        <div class="relative mb-10 group">
-            <i class="fa-solid fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary transition-colors text-lg"></i>
-            <input type="text" id="searchInput" onkeyup="searchDocs()" placeholder="ค้นหาเลขรับหนังสือ, ชื่อเรื่อง, หรือกองงานที่รับผิดชอบ..." class="w-full pl-16 pr-8 py-5 rounded-[24px] border-none shadow-md outline-none focus:ring-4 focus:ring-primary/10 text-lg transition-all bg-white font-medium">
+        <!-- View: Dashboard -->
+        <div id="view-dashboard" class="block">
+            <div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
-
-        <div id="view-dashboard" class="block animate-fade-in"><div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
         
-        <div id="view-by-owner" class="hidden animate-fade-in">
+        <!-- View: By Owner -->
+        <div id="view-by-owner" class="hidden">
             <div class="bg-white p-8 rounded-[35px] shadow-sm mb-8 border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div><h3 class="font-black text-primary uppercase text-xl">ตรวจสอบตามกองงาน</h3><p class="text-xs text-gray-400">สรุปงานประจำเดือนแยกตามส่วนราชการ</p></div>
-                <select id="ownerFilter" onchange="renderByOwner()" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none font-bold w-full md:w-80 focus:border-primary">
+                <div class="font-black text-primary uppercase">เลือกกองงานที่ต้องการตรวจสอบ</div>
+                <select id="ownerFilter" onchange="renderByOwner()" class="bg-gray-50 border-2 border-gray-100 p-4 rounded-2xl outline-none font-bold w-full md:w-80">
                     <option value="">-- เลือกกองงาน --</option>
                     <option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                 </select>
@@ -75,22 +70,24 @@
     <!-- Modal Form -->
     <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-[40px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl">
-            <h3 class="text-2xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">บันทึกข้อมูลหนังสือรับ</h3>
+            <h3 class="text-2xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">ลงข้อมูลหนังสือรับ</h3>
             <form id="docForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <input type="hidden" id="docId">
                 <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">เลขรับหนังสือ</label><input type="text" id="f_receiveNo" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 <div class="md:col-span-2"><label class="text-[10px] font-black text-gray-400 uppercase">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">วันที่ออกหนังสือ</label><input type="date" id="f_bookDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
                 <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
-                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">หน่วยงาน</label>
+                <!-- 🟢 ปุ่ม "ส่งจากหน่วยงาน" กลับมาแล้ว -->
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">ส่งมาจากหน่วยงาน</label><input type="text" id="f_fromOrg" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">ผู้รับผิดชอบ (กองงาน)</label>
                     <select id="f_owner" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold">
                         <option value="">-- รอระบุ --</option><option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                     </select>
                 </div>
-                <div class="md:col-span-3"><label class="text-[10px] font-black text-blue-400 uppercase">ลิงก์ Google Drive (PDF)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 outline-none text-blue-600 font-medium"></div>
+                <div class="md:col-span-2"><label class="text-[10px] font-black text-blue-400 uppercase">ลิงก์ Google Drive (PDF)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 outline-none text-blue-600 font-medium"></div>
                 <div class="md:col-span-3 flex justify-end gap-3 mt-4 border-t pt-8">
                     <button type="button" onclick="closeModal()" class="px-8 py-3 text-gray-400 font-bold">ยกเลิก</button>
-                    <button type="button" onclick="saveDoc()" id="btnSave" class="px-14 py-4 bg-primary text-white font-black rounded-2xl shadow-xl">บันทึกข้อมูลเข้าชีท</button>
+                    <button type="button" onclick="saveDoc()" id="btnSave" class="px-14 py-4 bg-primary text-white font-black rounded-2xl shadow-xl hover:scale-105 transition">บันทึกข้อมูลเข้าชีท</button>
                 </div>
             </form>
         </div>
@@ -101,7 +98,7 @@
         <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl">
             <h3 class="text-2xl font-black text-primary mb-6 uppercase">Admin Login</h3>
             <input type="password" id="passwordInput" placeholder="••••" class="w-full bg-gray-100 rounded-2xl p-5 text-center text-4xl outline-none border-2 focus:border-primary mb-6">
-            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-xl">ยืนยัน</button>
+            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-black transition">ยืนยัน</button>
         </div>
     </div>
 
@@ -144,6 +141,7 @@
                 const d = documents.find(x => x.id === id);
                 document.getElementById('f_receiveNo').value = d.receiveNo;
                 document.getElementById('f_subject').value = d.subject;
+                document.getElementById('f_fromOrg').value = d.fromOrg;
                 document.getElementById('f_owner').value = d.owner;
                 document.getElementById('f_fileUrl').value = d.fileUrl || '';
             }
@@ -152,14 +150,20 @@
 
         async function saveDoc() {
             const btn = document.getElementById('btnSave');
-            btn.disabled = true; btn.innerText = "กำลังบันทึก...";
-            const id = document.getElementById('docId').value || 'ID-' + Date.now();
+            btn.disabled = true; btn.innerText = "กำลังส่งข้อมูล...";
+            const isEdit = !!document.getElementById('docId').value;
             const doc = {
-                id: id, receiveNo: document.getElementById('f_receiveNo').value, subject: document.getElementById('f_subject').value,
-                owner: document.getElementById('f_owner').value, fileUrl: document.getElementById('f_fileUrl').value.trim(),
-                status: document.getElementById('docId').value ? documents.find(x=>x.id===id).status : "ลงรับแล้ว"
+                id: document.getElementById('docId').value || 'ID-' + Date.now(),
+                receiveNo: document.getElementById('f_receiveNo').value,
+                subject: document.getElementById('f_subject').value,
+                bookDate: document.getElementById('f_bookDate').value,
+                receivedDate: document.getElementById('f_receivedDate').value,
+                fromOrg: document.getElementById('f_fromOrg').value, // 🟢 ส่งค่าหน่วยงานกลับคืน
+                owner: document.getElementById('f_owner').value,
+                fileUrl: document.getElementById('f_fileUrl').value.trim(),
+                status: isEdit ? documents.find(x=>x.id===document.getElementById('docId').value).status : "ลงรับแล้ว"
             };
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: document.getElementById('docId').value?'update':'create', data: doc }) });
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: isEdit?'update':'create', data: doc }) });
             closeModal(); fetchData(); btn.disabled = false; btn.innerText = "บันทึกข้อมูล";
         }
 
@@ -169,8 +173,16 @@
             fetchData();
         }
 
+        // 🟢 ฟังก์ชันยืนยันการรับหนังสือของกองงาน
+        async function confirmReceipt(id) {
+            const today = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+            if(!confirm('ยืนยันว่ากองได้รับหนังสือแล้ว ณ วันที่ ' + today + '?')) return;
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'updateStatus', id: id, status: 'กำลังเสนอ' }) }); // ปรับสถานะอัตโนมัติ
+            fetchData();
+        }
+
         async function deleteDoc(id) {
-            if(!confirm('ยืนยันการลบลำดับนี้?')) return;
+            if(!confirm('ยืนยันการลบ?')) return;
             documents = documents.filter(x=>x.id!==id); renderAll();
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) });
             fetchData();
@@ -178,9 +190,7 @@
 
         function renderAll() {
             renderStats();
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = documents.filter(x => (x.subject||'').toLowerCase().includes(q) || (x.receiveNo||'').toLowerCase().includes(q));
-            renderCards(filtered, 'dashboard-cards');
+            renderCards(documents, 'dashboard-cards');
             renderByOwner();
         }
 
@@ -189,10 +199,10 @@
             const now = new Date().getMonth();
             const monthList = documents.filter(x => x.receivedDate && new Date(x.receivedDate).getMonth() === now);
             area.innerHTML = `
-                <div class="glass-card p-6 border-l-4 border-primary"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest text-xs">เดือนนี้</p><h3 class="text-3xl font-black text-primary">${monthList.length || documents.length}</h3></div>
-                <div class="glass-card p-6 border-l-4 border-amber-500"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest text-xs">ลงรับแล้ว</p><h3 class="text-3xl font-black text-amber-500">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
-                <div class="glass-card p-6 border-l-4 border-indigo-500"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest text-xs">กำลังเสนอ</p><h3 class="text-3xl font-black text-indigo-500">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
-                <div class="bg-primary p-6 rounded-[28px] shadow-2xl overflow-hidden text-white"><p class="text-[10px] font-black text-blue-200 uppercase tracking-widest text-xs">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-primary"><p class="text-[10px] font-black text-gray-400 uppercase">เดือนนี้</p><h3 class="text-3xl font-black text-primary">${monthList.length || documents.length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-amber-500"><p class="text-[10px] font-black text-gray-400 uppercase">ลงรับแล้ว</p><h3 class="text-3xl font-black text-amber-500">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
+                <div class="glass-card p-6 border-l-4 border-indigo-500"><p class="text-[10px] font-black text-gray-400 uppercase">กำลังเสนอ</p><h3 class="text-3xl font-black text-indigo-500">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
+                <div class="bg-primary p-6 rounded-[28px] shadow-2xl text-white"><p class="text-[10px] font-black text-blue-200 uppercase">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
             `;
         }
 
@@ -201,8 +211,6 @@
             if(!owner) { document.getElementById('owner-cards').innerHTML = ''; return; }
             renderCards(documents.filter(x => x.owner === owner), 'owner-cards');
         }
-
-        function searchDocs() { renderAll(); }
 
         function renderCards(list, containerId) {
             const container = document.getElementById(containerId); container.innerHTML = '';
@@ -213,7 +221,6 @@
                 
                 container.innerHTML += `
                 <div class="glass-card p-8 flex flex-col h-full relative">
-                    <!-- 🟢 ปุ่มแก้ไขและลบ (จะโชว์เมื่อเป็น Admin) -->
                     ${isAdmin ? `
                     <div class="absolute top-6 right-6 flex gap-3 text-gray-300">
                         <button onclick="openModal('${d.id}')" class="hover:text-blue-500 transition text-lg"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -223,37 +230,32 @@
                     <div class="mb-6">
                         <span class="text-[9px] font-black px-2.5 py-1 rounded-lg ${d.status==='เสร็จสิ้น'?'bg-green-100 text-green-600':'bg-amber-100 text-amber-600'}">${d.status}</span>
                         <p class="text-[10px] text-gray-400 font-bold uppercase mt-5">เลขรับหนังสือ :</p>
-                        <h5 class="text-xl font-black text-primary tracking-tighter leading-none mb-3">${d.receiveNo || '-'}</h5>
+                        <h5 class="text-xl font-black text-primary tracking-tighter mb-3 leading-none">${d.receiveNo || '-'}</h5>
                         <h4 class="text-sm font-bold text-gray-700 leading-snug line-clamp-2">${d.subject}</h4>
                     </div>
 
-                    <div class="space-y-3 text-xs text-gray-500 mb-8 flex-grow border-t pt-5">
-                        <p class="flex items-center gap-2"><i class="fa-solid fa-user-circle text-gray-300"></i> ผู้รับผิดชอบ: <span class="font-bold text-gray-700">${d.owner || 'รอระบุ'}</span></p>
-                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[11px] shadow-xl hover:bg-blue-700 transition active:scale-95"><i class="fa-solid fa-file-pdf text-base"></i> เปิดดูเอกสาร PDF</a>`:''}
+                    <div class="space-y-2 text-xs text-gray-500 mb-6 flex-grow border-t pt-5">
+                        <p>ส่งมาจาก: <span class="font-bold text-gray-800">${d.fromOrg || '-'}</span></p>
+                        <p>ผู้รับผิดชอบ: <span class="font-bold text-gray-800">${d.owner || 'รอระบุ'}</span></p>
+                        <p>กองรับหนังสือเมื่อ: <span class="font-bold text-blue-600">${d.ownerReceivedDate || 'ยังไม่ได้รับการยืนยัน'}</span></p>
+                        
+                        <!-- 🟢 ปุ่มยืนยันได้รับหนังสือสำหรับกองงาน -->
+                        ${!d.ownerReceivedDate ? `<button onclick="confirmReceipt('${d.id}')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl font-bold text-[10px] mt-3 border border-blue-100 hover:bg-blue-600 hover:text-white transition">ยืนยันได้รับหนังสือแล้ว</button>` : ''}
+                        
+                        ${d.fileUrl ? `<a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-blue-600 text-white py-3.5 rounded-2xl font-black text-[11px] shadow-xl hover:bg-blue-700 transition mt-4"><i class="fa-solid fa-file-pdf text-base"></i> เปิดดูเอกสารฉบับเต็ม</a>`:''}
                     </div>
 
-                    <!-- 🟢 Progress Bar สไตล์สวยงาม ข้อความไม่ทับ -->
                     <div class="progress-wrapper">
                         <div class="progress-line-bg"><div class="progress-line-fill" style="width: ${progressWidth}"></div></div>
                         <div class="status-steps">
-                            ${statusFlow.map((s, i) => `
-                                <div class="step-item ${step >= i ? 'active' : ''}">
-                                    <div class="step-dot"></div>
-                                    <div class="step-label">${s}</div>
-                                </div>
-                            `).join('')}
+                            ${statusFlow.map((s, i) => `<div class="step-item ${step >= i ? 'active' : ''}"><div class="step-dot"></div><div class="step-label">${s}</div></div>`).join('')}
                         </div>
                     </div>
 
-                    <!-- 🟢 ปุ่มเปลี่ยนสถานะ (จะโชว์เมื่อเป็น Admin) -->
                     ${isAdmin ? `
                     <div class="flex justify-between items-center mt-6 pt-5 border-t border-gray-50">
-                        <button onclick="updateStatus('${d.id}', '${statusFlow[step-1]}')" class="text-[10px] font-black text-gray-400 hover:text-primary ${step===0?'invisible':''}">
-                            <i class="fa-solid fa-angle-left mr-1"></i> ย้อนกลับ
-                        </button>
-                        <button onclick="updateStatus('${d.id}', '${statusFlow[step+1]}')" class="bg-primary text-white px-8 py-2.5 rounded-xl text-[10px] font-black shadow-lg hover:scale-105 active:scale-95 ${step===2?'hidden':''}">
-                            ถัดไป <i class="fa-solid fa-angle-right ml-1"></i>
-                        </button>
+                        <button onclick="updateStatus('${d.id}', '${statusFlow[step-1]}')" class="text-[10px] font-black text-gray-400 hover:text-primary ${step===0?'invisible':''}">ย้อนกลับ</button>
+                        <button onclick="updateStatus('${d.id}', '${statusFlow[step+1]}')" class="bg-primary text-white px-8 py-2.5 rounded-xl text-[10px] font-black shadow-lg hover:scale-105 active:scale-95 ${step===2?'hidden':''}">ถัดไป <i class="fa-solid fa-angle-right ml-1"></i></button>
                     </div>` : ''}
                 </div>`;
             });
