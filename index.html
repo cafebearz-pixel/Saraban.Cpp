@@ -66,17 +66,18 @@
             <h3 class="text-2xl font-black text-primary mb-8 border-l-4 border-gold pl-4 uppercase">ลงข้อมูลหนังสือรับ</h3>
             <form id="docForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <input type="hidden" id="docId">
+                <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">เลขรับที่</label><input type="text" id="f_receiveNo2" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold text-lg" placeholder="ระบุเลขรับที่"></div>
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">เลขรับหนังสือ</label><input type="text" id="f_receiveNo" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold text-lg"></div>
-                <div class="md:col-span-2"><label class="text-[11px] font-black text-gray-400 uppercase">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold text-lg"></div>
+                <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">ส่งมาจากหน่วยงาน</label><input type="text" id="f_fromOrg" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold text-lg"></div>
+                <div class="md:col-span-3"><label class="text-[11px] font-black text-gray-400 uppercase">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold text-xl"></div>
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">วันที่ออกหนังสือ</label><input type="date" id="f_bookDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
-                <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">ส่งมาจากหน่วยงาน</label><input type="text" id="f_fromOrg" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 <div class="md:col-span-1"><label class="text-[11px] font-black text-gray-400 uppercase">ผู้รับผิดชอบ (กองงาน)</label>
                     <select id="f_owner" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold">
                         <option value="">-- รอระบุ --</option><option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                     </select>
                 </div>
-                <div class="md:col-span-2"><label class="text-[11px] font-black text-blue-400 uppercase">ลิงก์ Google Drive (PDF)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 outline-none text-blue-600 font-bold"></div>
+                <div class="md:col-span-3"><label class="text-[11px] font-black text-blue-400 uppercase">ลิงก์ Google Drive (PDF)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 outline-none text-blue-600 font-bold"></div>
                 <div class="md:col-span-3 flex justify-end gap-3 mt-4 border-t pt-8">
                     <button type="button" onclick="closeModal()" class="px-8 py-3 text-gray-400 font-bold">ยกเลิก</button>
                     <button type="button" onclick="saveDoc()" id="btnSave" class="px-14 py-4 bg-primary text-white font-black rounded-2xl shadow-xl hover:scale-105 transition">บันทึกข้อมูลเข้าชีท</button>
@@ -94,7 +95,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzw4k7u6Ma2fTJ1XGrJ-Mhr8uunVKfwTQuc9jlS9-g2mK3mBZxmQIkP4he12pnKGFMK/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyGa_dNlU6HQTbRYHL5qvY0U3og8US0VCJMsEK6SaBm8U7onG7SzkrhZurYZ6H1rsFV/exec";
         let isAdmin = false, documents = [];
 
         function formatDateForInput(dateStr) {
@@ -145,6 +146,7 @@
             document.getElementById('docId').value = id || '';
             if(id) {
                 const d = documents.find(x => x.id === id);
+                document.getElementById('f_receiveNo2').value = d.receiveNo2 || '';
                 document.getElementById('f_receiveNo').value = d.receiveNo || '';
                 document.getElementById('f_subject').value = d.subject || '';
                 document.getElementById('f_fromOrg').value = d.fromOrg || '';
@@ -163,6 +165,7 @@
             const isEdit = !!id;
             const doc = {
                 id: id || 'ID-' + Date.now(),
+                receiveNo2: document.getElementById('f_receiveNo2').value,
                 receiveNo: document.getElementById('f_receiveNo').value,
                 subject: document.getElementById('f_subject').value,
                 bookDate: document.getElementById('f_bookDate').value,
@@ -233,11 +236,13 @@
                     </div>` : ''}
                     <div class="mb-6">
                         <span class="text-[10px] font-black px-3 py-1.5 rounded-lg ${d.status==='เสร็จสิ้น'?'bg-green-100 text-green-600':'bg-amber-100 text-amber-600'}">${d.status}</span>
-                        <p class="text-[11px] text-gray-400 font-bold uppercase mt-5">เลขรับหนังสือ :</p>
-                        <h5 class="text-2xl font-black text-primary tracking-tighter mb-3 leading-none">${d.receiveNo || '-'}</h5>
-                        <h4 class="text-lg font-bold text-gray-800 leading-snug line-clamp-3 bg-yellow-50/50 p-2 rounded-xl border border-yellow-100/50">${d.subject}</h4>
+                        <div class="mt-5 space-y-1">
+                             <p class="text-[12px] text-primary font-black uppercase">เลขรับที่ : <span class="bg-blue-100 px-2 py-0.5 rounded text-blue-700">${d.receiveNo2 || '-'}</span></p>
+                             <p class="text-[11px] text-gray-400 font-bold uppercase">เลขรับหนังสือ : <span class="text-gray-700">${d.receiveNo || '-'}</span></p>
+                        </div>
+                        <h4 class="text-xl font-bold text-gray-800 leading-snug line-clamp-3 bg-yellow-50/50 p-3 rounded-xl border border-yellow-100/50 mt-4">${d.subject}</h4>
                     </div>
-                    <div class="space-y-3 text-sm text-gray-600 mb-6 flex-grow border-t pt-5">
+                    <div class="space-y-3 text-[13px] text-gray-600 mb-6 flex-grow border-t pt-5">
                         <div class="grid grid-cols-2 gap-2 text-[12px]">
                             <div><p class="text-gray-400 font-bold uppercase text-[9px]">วันที่ออกหนังสือ</p><p class="font-bold text-gray-800"><i class="fa-regular fa-calendar-check mr-1 text-gold"></i>${formatThaiDate(d.bookDate)}</p></div>
                             <div><p class="text-gray-400 font-bold uppercase text-[9px]">วันที่ลงรับ</p><p class="font-bold text-gray-800"><i class="fa-solid fa-calendar-day mr-1 text-blue-400"></i>${formatThaiDate(d.receivedDate)}</p></div>
