@@ -8,26 +8,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Sarabun', 'sans-serif'] },
-                    colors: { primary: '#0F172A', gold: '#D4AF37', accent: '#1E293B' }
-                }
-            }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Sarabun', 'sans-serif'] }, colors: { primary: '#0F172A', gold: '#D4AF37' } } } }
     </script>
     <style>
-        body { background: #f1f5f9; font-family: 'Sarabun', sans-serif; }
-        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 28px; transition: 0.3s; position: relative; overflow: hidden; }
+        body { background: #f1f5f9; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 28px; transition: 0.3s; position: relative; }
         .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1); }
         .btn-tab { padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 14px; transition: 0.2s; }
         .progress-track { height: 6px; background: #f1f5f9; border-radius: 10px; position: relative; margin: 25px 0 35px; }
-        .progress-fill { position: absolute; height: 100%; background: #0F172A; border-radius: 10px; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: white; border: 3px solid #cbd5e1; z-index: 10; }
-        .dot.active { border-color: #0F172A; background: #0F172A; box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.1); }
-        .status-text { position: absolute; top: 22px; transform: translateX(-50%); font-size: 10px; font-weight: 800; white-space: nowrap; color: #94a3b8; }
-        .status-text.active { color: #0F172A; }
+        .progress-fill { position: absolute; height: 100%; background: #0F172A; border-radius: 10px; transition: 0.5s; }
+        .dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 50%; background: white; border: 3px solid #cbd5e1; }
+        .dot.active { border-color: #0F172A; background: #0F172A; }
+        .status-label { position: absolute; top: 20px; transform: translateX(-50%); font-size: 9px; font-weight: 800; white-space: nowrap; color: #94a3b8; }
+        .status-label.active { color: #0F172A; }
     </style>
 </head>
 <body class="antialiased">
@@ -35,81 +28,72 @@
     <!-- Nav -->
     <nav class="bg-primary text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
         <div class="flex items-center gap-3">
-            <div class="bg-gold p-2 rounded-xl text-primary shadow-lg"><i class="fa-solid fa-file-invoice"></i></div>
-            <span class="font-bold tracking-tight text-lg">SARABAN CHAMPAKPAEW</span>
+            <i class="fa-solid fa-file-invoice text-gold text-xl"></i>
+            <span class="font-bold tracking-tight">SARABAN CHAMPAKPAEW</span>
         </div>
-        <button id="authBtn" onclick="toggleAuth()" class="bg-white/10 hover:bg-gold hover:text-primary px-5 py-2 rounded-full text-xs font-bold transition-all border border-white/20 shadow-inner">
-            <span id="authLabel">GUEST MODE</span>
-        </button>
+        <div class="flex items-center gap-4">
+            <button onclick="fetchData()" class="text-white/40 hover:text-white transition"><i class="fa-solid fa-sync-alt"></i></button>
+            <button id="authBtn" onclick="toggleAuth()" class="bg-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold border border-white/20 tracking-widest">GUEST MODE</button>
+        </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        
         <!-- Big Number Stats -->
-        <div id="stats-area" class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8"></div>
+        <div id="stats-area" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
 
-        <!-- Navigation -->
+        <!-- Navigation Buttons -->
         <div class="flex flex-wrap gap-2 mb-10 bg-white/50 backdrop-blur p-2 rounded-2xl border border-white shadow-sm">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="btn-tab bg-primary text-white flex-1 md:flex-none">หน้าแรก</button>
-            <button onclick="switchTab('completed')" id="tab-completed" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 md:flex-none shadow-sm">หนังสือที่เสร็จสิ้นแล้ว</button>
-            <button onclick="switchTab('search')" id="tab-search" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 md:flex-none shadow-sm"><i class="fa-solid fa-search"></i> ค้นหา</button>
-            <button id="addDocBtn" onclick="openModal()" class="hidden ml-auto bg-gold text-primary btn-tab shadow-lg shadow-gold/20 hover:scale-105 active:scale-95 transition"><i class="fa-solid fa-plus-circle"></i> ลงรับหนังสือใหม่</button>
+            <button onclick="switchTab('completed')" id="tab-completed" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 md:flex-none font-bold">งานที่เสร็จสิ้น</button>
+            <button onclick="switchTab('search')" id="tab-search" class="btn-tab bg-white text-gray-400 hover:bg-gray-50 flex-1 md:flex-none font-bold"><i class="fa-solid fa-search"></i> ค้นหา</button>
+            <button id="addDocBtn" onclick="openModal()" class="hidden ml-auto bg-gold text-primary btn-tab shadow-lg shadow-gold/20 hover:scale-105 transition"><i class="fa-solid fa-plus-circle"></i> ลงรับหนังสือใหม่</button>
         </div>
 
         <!-- Views -->
         <div id="view-dashboard" class="block animate-fade-in"><div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
         <div id="view-completed" class="hidden animate-fade-in"><div id="completed-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div></div>
         <div id="view-search" class="hidden animate-fade-in">
-            <div class="relative mb-8">
-                <i class="fa-solid fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="searchInput" onkeyup="searchDocs()" placeholder="พิมพ์เลขรับหนังสือ หรือชื่อเรื่องที่ต้องการค้นหา..." class="w-full pl-14 pr-6 py-5 rounded-2xl border-none shadow-md outline-none focus:ring-2 focus:ring-primary text-lg">
-            </div>
+            <input type="text" id="searchInput" onkeyup="searchDocs()" placeholder="พิมพ์เลขรับ หรือชื่อเรื่องที่ต้องการค้นหา..." class="w-full px-6 py-5 rounded-2xl border-none shadow-md outline-none focus:ring-2 focus:ring-primary text-lg mb-8">
             <div id="search-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
-
     </main>
 
     <!-- Modal Form -->
     <div id="docModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-[35px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl border border-white/20">
-            <div class="flex justify-between items-center mb-8 border-b pb-4">
-                <h3 class="text-2xl font-black text-primary flex items-center gap-3"><i class="fa-solid fa-edit text-gold"></i> บันทึกหนังสือรับ</h3>
-                <button onclick="closeModal()" class="text-gray-300 hover:text-red-500 transition text-2xl"><i class="fa-solid fa-times-circle"></i></button>
-            </div>
+        <div class="bg-white rounded-[40px] p-8 w-full max-w-4xl overflow-y-auto max-h-[90vh] shadow-2xl">
+            <h3 class="text-xl font-black text-primary mb-8 border-l-4 border-gold pl-4">ฟอร์มบันทึกข้อมูลหนังสือรับ</h3>
             <form id="docForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <input type="hidden" id="docId">
-                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">เลขรับหนังสือ</label><input type="text" id="f_receiveNo" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none font-bold"></div>
-                <div class="md:col-span-2"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none font-bold"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">เลขรับหนังสือ</label><input type="text" id="f_receiveNo" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
+                <div class="md:col-span-2"><label class="text-[10px] font-black text-gray-400 uppercase">ชื่อเรื่องรับ</label><input type="text" id="f_subject" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"></div>
                 
-                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">วันที่ออกหนังสือ</label><input type="date" id="f_bookDate" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none"></div>
-                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none"></div>
-                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ผู้รับผิดชอบได้รับวันที่</label><input type="date" id="f_ownerReceivedDate" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">วันที่ออกหนังสือ</label><input type="date" id="f_bookDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">วันที่ลงรับ</label><input type="date" id="f_receivedDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">ผู้รับผิดชอบได้รับวันที่</label><input type="date" id="f_ownerReceivedDate" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none"></div>
 
-                <div class="md:col-span-2"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ส่งจากหน่วยงาน</label><input type="text" id="f_fromOrg" list="org-list" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none"><datalist id="org-list"></datalist></div>
-                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ผู้รับผิดชอบ (กองงาน)</label>
-                    <select id="f_owner" class="w-full bg-gray-50 border-2 border-transparent focus:border-primary rounded-2xl p-4 outline-none font-bold">
+                <div class="md:col-span-2"><label class="text-[10px] font-black text-gray-400 uppercase">ส่งจากหน่วยงาน</label><input type="text" id="f_fromOrg" list="org-list" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold"><datalist id="org-list"></datalist></div>
+                <div class="md:col-span-1"><label class="text-[10px] font-black text-gray-400 uppercase">ผู้รับผิดชอบ (กองงาน)</label>
+                    <select id="f_owner" class="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none font-bold">
                         <option value="">-- รอระบุ --</option><option value="สำนักปลัด">สำนักปลัด</option><option value="กองคลัง">กองคลัง</option><option value="กองช่าง">กองช่าง</option><option value="กองการศึกษา">กองการศึกษา</option><option value="นักทรัพย์">นักทรัพย์</option><option value="นิติกร">นิติกร</option><option value="งานป้องกัน">งานป้องกัน</option><option value="งานสภา">งานสภา</option><option value="ประชาสัมพันธ์">ประชาสัมพันธ์</option><option value="นักจัดการ">นักจัดการ</option><option value="สาธารณสุข">สาธารณสุข</option><option value="สปสช">สปสช</option><option value="ตรวจสอบภายใน">ตรวจสอบภายใน</option><option value="ธุรการ">ธุรการ</option><option value="เกษตร">เกษตร</option><option value="สิ่งแวดล้อม">สิ่งแวดล้อม</option>
                     </select>
                 </div>
-                <div class="md:col-span-3"><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ลิงก์ Google Drive (เปิดดูเอกสาร)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-transparent focus:border-blue-500 rounded-2xl p-4 outline-none text-blue-600 font-medium"></div>
+                <!-- ช่องใส่ลิงก์ Drive (จะลงคอลัมน์ K) -->
+                <div class="md:col-span-3"><label class="text-[10px] font-black text-blue-400 uppercase tracking-widest">ลิงก์ Google Drive (เปิดดูเอกสาร PDF)</label><input type="text" id="f_fileUrl" placeholder="https://drive.google.com/..." class="w-full bg-blue-50 border-2 border-blue-100 rounded-2xl p-4 outline-none text-blue-600 font-medium focus:border-blue-500 transition"></div>
 
                 <div class="md:col-span-3 flex justify-end gap-3 mt-4 border-t pt-8">
                     <button type="button" onclick="closeModal()" class="px-8 py-3 text-gray-400 font-bold hover:text-red-500 transition">ยกเลิก</button>
-                    <button type="button" onclick="saveDoc()" id="btnSave" class="px-12 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 transition hover:scale-105 active:scale-95">บันทึกข้อมูลเข้าระบบ</button>
+                    <button type="button" onclick="saveDoc()" id="btnSave" class="px-12 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 transition">บันทึกข้อมูลเข้าระบบ</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-primary/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl border border-white/20">
-            <div class="w-20 h-20 bg-primary text-gold rounded-3xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl"><i class="fa-solid fa-lock"></i></div>
-            <h3 class="text-2xl font-black text-primary mb-2 tracking-tighter">ADMIN ACCESS</h3>
-            <p class="text-gray-400 text-xs mb-8 font-bold">กรุณากรอกรหัสผ่านเพื่อจัดการข้อมูล</p>
-            <input type="password" id="passwordInput" placeholder="••••" class="w-full bg-gray-100 rounded-2xl p-5 text-center text-4xl tracking-widest outline-none border-2 border-transparent focus:border-primary mb-6 transition-all">
-            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-xl hover:bg-black transition-all">ยืนยัน</button>
-            <button onclick="closeLoginModal()" class="mt-6 text-gray-400 font-bold text-sm hover:text-primary">ยกเลิก</button>
+    <div id="loginModal" class="hidden fixed inset-0 bg-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl">
+            <h3 class="text-2xl font-black text-primary mb-6 uppercase">Admin Access</h3>
+            <input type="password" id="passwordInput" placeholder="••••" class="w-full bg-gray-100 rounded-2xl p-5 text-center text-4xl tracking-widest outline-none border-2 focus:border-primary mb-6">
+            <button onclick="attemptLogin()" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-xl hover:bg-black transition">ยืนยันรหัสผ่าน</button>
         </div>
     </div>
 
@@ -117,10 +101,20 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzbp68pMAVTctC05s_alIhRIscXNms9w-D7K5VwzAIp-_JmLKZ24PCADTRn7AmNw7T6/exec";
         let isAdmin = false, documents = [];
 
-        document.addEventListener('DOMContentLoaded', fetchData);
+        document.addEventListener('DOMContentLoaded', () => {
+            const cache = localStorage.getItem('saraban_cache');
+            if(cache) { documents = JSON.parse(cache); renderAll(); }
+            fetchData();
+        });
 
         async function fetchData() {
-            try { const res = await fetch(API_URL + "?action=read"); documents = await res.json() || []; renderAll(); updateOrgList(); } catch (e) {}
+            try {
+                const res = await fetch(API_URL + "?action=read");
+                documents = await res.json() || [];
+                localStorage.setItem('saraban_cache', JSON.stringify(documents));
+                renderAll();
+                updateOrgList();
+            } catch (e) { console.error("Load Error"); }
         }
 
         function toggleAuth() { if(isAdmin) { isAdmin = false; updateAuthUI(); } else document.getElementById('loginModal').classList.remove('hidden'); }
@@ -131,7 +125,7 @@
         function switchTab(t) { 
             ['dashboard', 'completed', 'search'].forEach(v => {
                 document.getElementById(`view-${v}`).classList.toggle('hidden', v!==t);
-                const btn = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`tab-${v}`);
                 if(btn) {
                     btn.classList.toggle('bg-primary', v===t); btn.classList.toggle('text-white', v===t);
                     btn.classList.toggle('bg-white', v!==t); btn.classList.toggle('text-gray-400', v!==t);
@@ -171,7 +165,7 @@
                 receivedDate: document.getElementById('f_receivedDate').value,
                 ownerReceivedDate: document.getElementById('f_ownerReceivedDate').value,
                 owner: document.getElementById('f_owner').value,
-                fileUrl: document.getElementById('f_fileUrl').value,
+                fileUrl: document.getElementById('f_fileUrl').value.trim(),
                 status: document.getElementById('docId').value ? documents.find(x=>x.id===id).status : "ลงรับแล้ว"
             };
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: document.getElementById('docId').value?'update':'create', data: doc }) });
@@ -185,7 +179,7 @@
         }
 
         async function deleteDoc(id) {
-            if(!confirm('ยืนยันการลบรายการนี้?')) return;
+            if(!confirm('ลบรายการนี้?')) return;
             documents = documents.filter(x=>x.id!==id); renderAll();
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', id: id }) });
         }
@@ -204,7 +198,7 @@
                 <div class="glass-card p-6 border-l-4 border-primary"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">เดือนนี้</p><h3 class="text-3xl font-black text-primary">${countMonth}</h3></div>
                 <div class="glass-card p-6 border-l-4 border-amber-500"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">ลงรับแล้ว</p><h3 class="text-3xl font-black text-amber-500">${documents.filter(x=>x.status==="ลงรับแล้ว").length}</h3></div>
                 <div class="glass-card p-6 border-l-4 border-indigo-500"><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">กำลังเสนอ</p><h3 class="text-3xl font-black text-indigo-500">${documents.filter(x=>x.status==="กำลังเสนอ").length}</h3></div>
-                <div class="bg-primary p-6 rounded-[28px] shadow-2xl relative overflow-hidden"><i class="fa-solid fa-check-circle absolute -right-4 -bottom-4 text-white/10 text-7xl"></i><p class="text-[10px] font-black text-blue-200 uppercase tracking-widest">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
+                <div class="bg-primary p-6 rounded-[28px] shadow-2xl relative overflow-hidden"><p class="text-[10px] font-black text-blue-200 uppercase tracking-widest">เสร็จสิ้น</p><h3 class="text-3xl font-black text-white">${documents.filter(x=>x.status==="เสร็จสิ้น").length}</h3></div>
             `;
         }
 
@@ -226,54 +220,41 @@
             list.forEach(d => {
                 const currentStep = statusFlow.indexOf(d.status);
                 const progressWidth = (currentStep / 2) * 100 + '%';
-                
+                const hasLink = d.fileUrl && d.fileUrl.length > 5;
+
                 container.innerHTML += `
                 <div class="glass-card p-8 flex flex-col h-full relative">
-                    ${isAdmin ? `
-                        <div class="absolute top-6 right-6 flex gap-4 text-gray-300">
-                            <button onclick="openModal('${d.id}')" class="hover:text-blue-500 transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteDoc('${d.id}')" class="hover:text-red-500 transition"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    `:''}
+                    ${isAdmin ? `<div class="absolute top-6 right-6 flex gap-4 text-gray-300"><button onclick="openModal('${d.id}')" class="hover:text-blue-500 transition"><i class="fa-solid fa-edit"></i></button><button onclick="deleteDoc('${d.id}')" class="hover:text-red-500 transition"><i class="fa-solid fa-trash"></i></button></div>`:''}
                     
                     <div class="mb-6">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-[10px] font-black px-2 py-1 rounded-lg ${d.status==='เสร็จสิ้น' ? 'bg-green-100 text-green-600' : (d.status==='กำลังเสนอ' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600')}">
-                                <i class="fa-solid fa-circle text-[6px] mr-1 mb-0.5"></i> ${d.status}
-                            </span>
-                        </div>
-                        <p class="text-xs font-black text-primary/40 uppercase mb-1">เลขรับหนังสือ :</p>
-                        <h5 class="text-lg font-black text-primary leading-tight mb-3">${d.receiveNo || '-'}</h5>
-                        <h4 class="text-md font-bold text-gray-700 leading-snug line-clamp-2">${d.subject || 'ไม่มีหัวข้อเรื่อง'}</h4>
+                        <span class="text-[10px] font-black px-2 py-1 rounded-lg ${d.status==='เสร็จสิ้น' ? 'bg-green-100 text-green-600' : (d.status==='กำลังเสนอ' ? 'bg-indigo-100 text-indigo-600' : 'bg-amber-100 text-amber-600')}">
+                            ${d.status}
+                        </span>
+                        <p class="text-xs font-black text-primary/40 uppercase mt-4 mb-1">เลขรับหนังสือ :</p>
+                        <h5 class="text-xl font-black text-primary leading-tight mb-3 tracking-tighter">${d.receiveNo || '-'}</h5>
+                        <h4 class="text-md font-bold text-gray-700 leading-snug line-clamp-2">${d.subject || 'ไม่มีเรื่อง'}</h4>
                     </div>
 
-                    <div class="space-y-3 text-xs text-gray-500 mb-8 flex-grow">
-                        <div class="flex items-start gap-3"><i class="fa-solid fa-building text-gray-300 mt-0.5"></i> <div><p class="text-[9px] font-black uppercase text-gray-400">จากหน่วยงาน</p><p class="font-bold text-gray-700">${d.fromOrg || '-'}</p></div></div>
-                        <div class="flex items-start gap-3"><i class="fa-solid fa-user-circle text-gray-300 mt-0.5"></i> <div><p class="text-[9px] font-black uppercase text-gray-400">กองงานที่รับผิดชอบ</p><p class="font-bold text-gray-700">${d.owner || 'ยังไม่ระบุ'}</p></div></div>
-                        <div class="flex items-start gap-3"><i class="fa-solid fa-calendar-alt text-gray-300 mt-0.5"></i> <div><p class="text-[9px] font-black uppercase text-gray-400">วันที่ลงรับในระบบ</p><p class="font-bold text-gray-700">${d.receivedDate || '-'}</p></div></div>
+                    <div class="space-y-3 text-xs text-gray-500 mb-8 flex-grow border-t pt-4">
+                        <p><i class="fa-solid fa-building w-4"></i> หน่วยงาน: <span class="font-bold text-gray-700">${d.fromOrg || '-'}</span></p>
+                        <p><i class="fa-solid fa-user-circle w-4"></i> ผู้รับผิดชอบ: <span class="font-bold text-gray-700">${d.owner || 'รอระบุ'}</span></p>
+                        <p><i class="fa-solid fa-calendar w-4"></i> ลงรับเมื่อ: <span class="font-bold text-gray-700">${d.receivedDate || '-'}</span></p>
                         
-                        ${d.fileUrl ? `
-                        <a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs mt-6 shadow-lg shadow-blue-200 hover:bg-blue-700 transition active:scale-95">
-                            <i class="fa-solid fa-file-pdf text-lg"></i> เปิดดูเอกสารฉบับเต็ม
+                        ${hasLink ? `
+                        <a href="${d.fileUrl}" target="_blank" class="flex items-center justify-center gap-3 w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xs mt-6 shadow-xl shadow-blue-200 hover:bg-blue-700 transition active:scale-95">
+                            <i class="fa-solid fa-file-pdf text-lg"></i> เปิดดูเอกสาร PDF
                         </a>`:''}
                     </div>
 
                     <div class="progress-track">
                         <div class="progress-fill" style="width: ${progressWidth}"></div>
-                        ${statusFlow.map((s, i) => `
-                            <div class="dot ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%"></div>
-                            <div class="status-text ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%">${s}</div>
-                        `).join('')}
+                        ${statusFlow.map((s, i) => `<div class="dot ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%"></div><div class="status-label ${currentStep >= i ? 'active' : ''}" style="left: ${i * 50}%">${s}</div>`).join('')}
                     </div>
 
                     ${isAdmin ? `
-                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">
-                            <button onclick="updateStatus('${d.id}', '${statusFlow[currentStep-1]}')" class="text-[10px] font-black text-gray-400 hover:text-primary transition ${currentStep===0?'invisible':''}">
-                                <i class="fa-solid fa-arrow-left mr-1"></i> ย้อนกลับ
-                            </button>
-                            <button onclick="updateStatus('${d.id}', '${statusFlow[currentStep+1]}')" class="bg-primary text-white px-6 py-2 rounded-xl text-[10px] font-black shadow-lg hover:bg-black transition active:scale-90 ${currentStep===2?'hidden':''}">
-                                ขั้นตอนถัดไป <i class="fa-solid fa-arrow-right ml-1"></i>
-                            </button>
+                        <div class="flex justify-between items-center mt-4">
+                            <button onclick="updateStatus('${d.id}', '${statusFlow[currentStep-1]}')" class="text-[10px] font-black text-gray-400 ${currentStep===0?'invisible':''}">ย้อนกลับ</button>
+                            <button onclick="updateStatus('${d.id}', '${statusFlow[currentStep+1]}')" class="bg-primary text-white px-6 py-2 rounded-xl text-[10px] font-black ${currentStep===2?'hidden':''}">ถัดไป</button>
                         </div>
                     `:''}
                 </div>`;
